@@ -2,13 +2,22 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Brick Heroes</title>
+<meta name="description" content="A cheerful 3D brick-city adventure for kids. Smash, build and hunt for gold bricks.">
+<meta name="theme-color" content="#8fd3ff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Brick Heroes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #8fd3ff; font-family: 'Lilita One', 'Arial Black', system-ui, sans-serif; user-select: none; -webkit-user-select: none; }
+  html, body { margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; background: #8fd3ff; font-family: 'Lilita One', 'Arial Black', system-ui, sans-serif; user-select: none; -webkit-user-select: none; }
   canvas { display: block; }
 
   #hud { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity .6s; }
@@ -51,17 +60,56 @@
   .btn { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 15px; box-shadow: 0 3px 0 rgba(0,0,0,.4); border: 2px solid rgba(255,255,255,.8); }
   .key { min-width: 32px; height: 30px; border-radius: 7px; background: #f2f2f2; color: #222; padding: 0 6px; display: grid; place-items: center; font-size: 14px; box-shadow: 0 3px 0 #999; }
 
+  /* ---- touch devices ---- */
+  :root { --sl: env(safe-area-inset-left, 0px); --sr: env(safe-area-inset-right, 0px); --st: env(safe-area-inset-top, 0px); --sb: env(safe-area-inset-bottom, 0px); --u: clamp(50px, 12.5vmin, 82px); }
   #touch { position: absolute; inset: 0; display: none; }
+  body.touch { touch-action: none; }
   body.touch #touch { display: block; }
-  body.touch canvas { touch-action: none; }
-  #stick { position: absolute; left: 28px; bottom: 28px; width: 140px; height: 140px; border-radius: 50%; background: rgba(20,30,60,.35); border: 3px solid rgba(255,255,255,.7); pointer-events: auto; touch-action: none; }
-  #knob { position: absolute; left: 50%; top: 50%; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%; background: rgba(255,255,255,.85); box-shadow: 0 4px 0 rgba(0,0,0,.35); pointer-events: none; }
-  .tb { position: absolute; width: 68px; height: 68px; border-radius: 50%; display: grid; place-items: center; font-size: 32px; color: #fff; border: 3px solid rgba(255,255,255,.85); box-shadow: 0 5px 0 rgba(0,0,0,.4); pointer-events: auto; touch-action: none; opacity: .85; }
-  .tb.down { transform: translateY(3px) scale(.94); box-shadow: 0 2px 0 rgba(0,0,0,.4); opacity: 1; }
-  body.touch #heroes .hero { pointer-events: auto; }
-  body.touch #heroes { bottom: 8px; gap: 8px; }
-  body.touch .hero { width: 48px; height: 48px; border-width: 3px; }
   body.touch #reset, body.touch #controls { display: none; }
+  #stickzone { position: absolute; left: 0; bottom: 0; width: 42%; top: 28%; pointer-events: auto; touch-action: none; }
+  #stick { position: absolute; width: calc(var(--u) * 1.9); height: calc(var(--u) * 1.9); margin: calc(var(--u) * -.95) 0 0 calc(var(--u) * -.95); border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,.08) 40%, rgba(255,255,255,.22)); border: 3px solid rgba(255,255,255,.55); opacity: .45; transition: opacity .25s; pointer-events: none; }
+  #stick.on { opacity: 1; transition: none; }
+  #knob { position: absolute; left: 50%; top: 50%; width: calc(var(--u) * .85); height: calc(var(--u) * .85); margin: calc(var(--u) * -.425) 0 0 calc(var(--u) * -.425); border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff, #dfe6ee 60%, #aab6c4); box-shadow: 0 4px 0 rgba(0,0,0,.3); }
+  #pad { position: absolute; right: calc(var(--sr) + 14px); bottom: calc(var(--sb) + 14px); width: calc(var(--u) * 2.7); height: calc(var(--u) * 2.8); }
+  .tb { position: absolute; width: var(--u); height: var(--u); border-radius: 50%; display: grid; place-items: center; font-size: calc(var(--u) * .46); color: #fff;
+    border: 3px solid rgba(255,255,255,.9); box-shadow: 0 5px 0 rgba(0,0,0,.35), inset 0 -6px 0 rgba(0,0,0,.15); pointer-events: auto; touch-action: none; opacity: .88; transition: transform .06s, opacity .2s, filter .2s; }
+  .tb.down { transform: translateY(3px) scale(.92); box-shadow: 0 2px 0 rgba(0,0,0,.35), inset 0 -3px 0 rgba(0,0,0,.15); opacity: 1; }
+  .tb.jump { width: calc(var(--u) * 1.3); height: calc(var(--u) * 1.3); font-size: calc(var(--u) * .6); right: 0; bottom: calc(var(--u) * .2); background: #2ecc40; }
+  .tb.attack { width: calc(var(--u) * 1.1); height: calc(var(--u) * 1.1); right: calc(var(--u) * 1.5); bottom: 0; background: #1e90ff; }
+  .tb.power { right: calc(var(--u) * 1.35); bottom: calc(var(--u) * 1.35); background: #8e44ad; }
+  .tb.build { right: calc(var(--u) * .15); bottom: calc(var(--u) * 1.7); background: #e53935; }
+  .tb.build.idle { opacity: .35; filter: saturate(.4); }
+  .tb.build.hot { opacity: 1; animation: hot .7s ease-in-out infinite; }
+  @keyframes hot { 50% { transform: scale(1.14); box-shadow: 0 0 22px #ffd54a, 0 5px 0 rgba(0,0,0,.35); } }
+  #fs { display: none; }
+  body.touch #fs.can { display: block; position: absolute; right: calc(var(--sr) + 16px); top: calc(var(--st) + 112px); pointer-events: auto; font-size: 24px; color: #fff; background: rgba(20,30,60,.45); border: 0; border-radius: 50%; width: 50px; height: 50px; }
+  body.touch #fs.can.pulse { animation: bob 1s ease-in-out 4; }
+  body.touch #heroes { z-index: 2; bottom: calc(var(--sb) + 8px); gap: 10px; }
+  body.touch #heroes .hero { pointer-events: auto; width: 52px; height: 52px; border-width: 3px; }
+  body.touch #studbox { left: calc(var(--sl) + 18px); top: calc(var(--st) + 10px); }
+  body.touch #meterwrap { left: calc(var(--sl) + 18px); top: calc(var(--st) + 66px); }
+  body.touch #goldrow { right: calc(var(--sr) + 16px); top: calc(var(--st) + 16px); }
+  body.touch #mute { right: calc(var(--sr) + 16px); top: calc(var(--st) + 54px); }
+  @media (orientation: portrait) {
+    body.touch #studnum { font-size: 34px; } body.touch .stud-ico { width: 36px; height: 36px; } body.touch .stud-ico::after { inset: 9px; }
+    body.touch #meterwrap { top: calc(var(--st) + 54px); } body.touch #meter { width: 150px; height: 18px; }
+    body.touch #goldrow { top: calc(var(--st) + 96px); left: calc(var(--sl) + 18px); right: auto; gap: 5px; }
+    body.touch .gb { width: 24px; height: 15px; } body.touch .gb::before, body.touch .gb::after { width: 6px; height: 4px; top: -4px; }
+    body.touch #heroes { top: calc(var(--st) + 128px); bottom: auto; left: calc(var(--sl) + 18px); transform: none; }
+    body.touch #heroes .hero { width: 42px; height: 42px; }
+    body.touch #fs.can { top: calc(var(--st) + 10px); right: calc(var(--sr) + 74px); }
+    body.touch #mute { top: calc(var(--st) + 10px); }
+    body.touch #bossbar { top: calc(var(--st) + 190px); } body.touch #bossbar .bar { width: 180px; }
+    #stickzone { width: 55%; top: 45%; }
+  }
+  @media (max-height: 500px) { .bigA { width: 72px; height: 72px; font-size: 42px; } .bigIco { font-size: 54px; } #rotate { margin-top: 10px; } }
+  #tiphint { display: none; margin-top: 30px; color: #fff; font: 16px system-ui, sans-serif; background: rgba(20,30,60,.55); padding: 8px 14px; border-radius: 14px; text-align: center; max-width: 86vw; }
+  #tiphint b { font-size: 26px; vertical-align: middle; }
+  #rotate { display: none; margin-top: 26px; font-size: 54px; animation: rot 2.4s ease-in-out infinite; filter: drop-shadow(0 4px 0 rgba(0,0,0,.3)); }
+  @keyframes rot { 0%, 25% { transform: rotate(0); } 55%, 100% { transform: rotate(-90deg); } }
+  @media (orientation: portrait) { body.touch #rotate { display: block; } }
   #bossbar { position: absolute; left: 50%; top: 110px; transform: translateX(-50%); display: none; align-items: center; gap: 10px; }
   #bossbar.show { display: flex; }
   #bossbar .ico { font-size: 38px; }
@@ -87,10 +135,10 @@
   #title { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer;
     background: radial-gradient(ellipse at center, rgba(255,255,255,0) 30%, rgba(0,40,90,.45)); transition: opacity .6s; }
   #title.hide { opacity: 0; pointer-events: none; }
-  #title h1 { font-size: clamp(56px, 12vw, 150px); margin: 0; color: #ffd23f; -webkit-text-stroke: 5px #c8102e; letter-spacing: 3px; text-align: center; line-height: .92;
+  #title h1 { font-size: clamp(40px, min(12vw, 19vh), 150px); margin: 0; color: #ffd23f; -webkit-text-stroke: 5px #c8102e; letter-spacing: 3px; text-align: center; line-height: .92;
     text-shadow: 0 10px 0 #7a0a1c, 0 18px 24px rgba(0,0,0,.45); transform: rotate(-3deg); font-weight: normal; }
-  #title .sub { margin-top: 26px; font-size: clamp(22px, 3.5vw, 40px); color: #fff; -webkit-text-stroke: 1.5px #1b2a4a; text-shadow: 0 4px 0 #1b2a4a; }
-  #title .press { margin-top: 44px; display: flex; gap: 22px; align-items: center; animation: bob 1s ease-in-out infinite; }
+  #title .sub { margin-top: min(26px, 3vh); font-size: clamp(20px, min(3.5vw, 6vh), 40px); color: #fff; -webkit-text-stroke: 1.5px #1b2a4a; text-shadow: 0 4px 0 #1b2a4a; }
+  #title .press { margin-top: min(44px, 5vh); display: flex; gap: 22px; align-items: center; animation: bob 1s ease-in-out infinite; }
   @keyframes bob { 50% { transform: translateY(-10px) scale(1.05); } }
   .bigA { width: 96px; height: 96px; border-radius: 50%; background: #2ecc40; color: #fff; font-size: 56px; display: grid; place-items: center; box-shadow: 0 7px 0 #1a8a28; border: 5px solid #fff; }
   .bigIco { font-size: 70px; filter: drop-shadow(0 5px 0 rgba(0,0,0,.3)); }
@@ -107,13 +155,15 @@
   <div id="bossbar"><div class="ico">🤖</div><div class="bar"><div id="bossfill"></div></div></div>
   <div id="heroes"></div>
   <div id="controls"></div>
+  <button id="fs" title="Full screen">⛶</button>
   <div id="touch">
-    <div id="stick"><div id="knob"></div></div>
-    <div class="tb" data-b="jump" style="right:28px;bottom:70px;background:#2ecc40">🦘</div>
-    <div class="tb" data-b="attack" style="right:108px;bottom:34px;background:#1e90ff">👊</div>
-    <div class="tb" data-b="power" style="right:108px;bottom:114px;background:#8e44ad">⚡</div>
-    <div class="tb" data-b="build" style="right:28px;bottom:150px;background:#e53935">🔨</div>
-    <div class="tb" data-b="swap" style="right:188px;bottom:74px;background:#f4c20d;width:56px;height:56px;font-size:26px">🔄</div>
+    <div id="stickzone"><div id="stick"><div id="knob"></div></div></div>
+    <div id="pad">
+      <div class="tb jump" data-b="jump">🦘</div>
+      <div class="tb attack" data-b="attack">👊</div>
+      <div class="tb power" data-b="power">⚡</div>
+      <div class="tb build idle" data-b="build">🔨</div>
+    </div>
   </div>
 </div>
 <div id="goldpop"><div class="brick"></div></div>
@@ -123,6 +173,8 @@
   <h1>BRICK<br>HEROES</h1>
   <div class="sub">⭐ Mission 1 ⭐</div>
   <div class="press"><div class="bigA">A</div><div class="bigIco kbd">⌨️</div><div class="bigIco kbd">🖱️</div><div class="bigIco tap" style="display:none">👆</div></div>
+  <div id="rotate">📱</div>
+  <div id="tiphint"><b>⬆️</b> Share → <b>➕</b> Add to Home Screen for full screen play</div>
   <button id="reset">Reset progress</button>
 </div>
 
@@ -229,6 +281,7 @@ const A = (() => {
   return {
     init, tone, noise,
     setMuted(m) { muted = m; if (master) master.gain.value = m ? 0 : 0.6; },
+    pause(p) { if (ctx) p ? ctx.suspend() : ctx.resume(); },
     get muted() { return muted; },
   };
 })();
@@ -264,8 +317,10 @@ const SFX = {
 // =====================================================================
 //  Renderer / scene
 // =====================================================================
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const isTouch = (matchMedia('(pointer: coarse)').matches && matchMedia('(hover: none)').matches) || (navigator.maxTouchPoints > 0 && /Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent));
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+let pixelCap = isTouch ? 1.5 : 2;   // phones: fewer pixels, steadier frame rate
+renderer.setPixelRatio(Math.min(devicePixelRatio, pixelCap));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -280,11 +335,14 @@ const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
 const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 600);
-addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+function fitView() { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); }
+addEventListener('resize', fitView);
+addEventListener('orientationchange', () => setTimeout(fitView, 250));   // iOS reports the new size late
+document.addEventListener('fullscreenchange', () => setTimeout(fitView, 100));
 
 const hemi = new THREE.HemisphereLight(0xdff0ff, 0x6a8a4a, 0.55); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xfff1d6, 2.0);
-sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+sun.castShadow = true; sun.shadow.mapSize.setScalar(isTouch ? 1024 : 2048);
 Object.assign(sun.shadow.camera, { left: -45, right: 45, top: 45, bottom: -45, near: 1, far: 180 });
 sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.04;
 scene.add(sun, sun.target);
@@ -498,6 +556,7 @@ const shake = a => { shakeAmt = Math.max(shakeAmt, a); };
 let activePad = null;
 function rumble(strong = 0.4, weak = 0.3, ms = 120) {
   try { activePad?.vibrationActuator?.playEffect?.('dual-rumble', { duration: ms, strongMagnitude: strong, weakMagnitude: weak }); } catch (e) {}
+  if (isTouch && !activePad) buzz(Math.min(60, ms * strong));
 }
 
 // =====================================================================
@@ -1098,13 +1157,15 @@ function addBuildable(x, z, pieces, onBuilt) {
   const b = { x, z, group, pieces: list, placed: 0, timer: 0, built: false, onBuilt, prompt, t: 0 };
   buildables.push(b); return b;
 }
+let nearBuild = false;
 function updateBuildables(dt) {
-  player.building = false;
+  player.building = false; nearBuild = false;
   const p = player.pos;
   for (const b of buildables) {
     if (b.update && b.built) b.update(b, dt);
     if (b.built) continue;
     const d = Math.hypot(p.x - b.x, p.z - b.z), near = d < 4 && p.y < 3;
+    if (near) nearBuild = true;
     b.prompt.visible = d < 30;
     const s = (near ? 2.3 : 1.7) + Math.sin(time * 6) * .15; b.prompt.scale.set(s, s, 1);
     b.prompt.position.y = 3.6 + Math.sin(time * 3) * .2;
@@ -1395,41 +1456,80 @@ $('mute').addEventListener('click', e => { e.stopPropagation(); toggleMute(); })
 function toggleMute() { A.setMuted(!A.muted); $('mute').textContent = A.muted ? '🔇' : '🔊'; }
 
 // ---- touch controls (shown only on touch devices) ----
-const isTouch = (matchMedia('(pointer: coarse)').matches && matchMedia('(hover: none)').matches) || (navigator.maxTouchPoints > 0 && /Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent));
-const touch = { mx: 0, my: 0, btn: {}, direct: -1 };
+const touch = { mx: 0, my: 0, btn: {}, direct: -1, lookT: 9 };
+function buzz(ms) { try { navigator.vibrate?.(ms); } catch (e) {} }
+const fsEl = document.documentElement;
+const fsOK = !!(fsEl.requestFullscreen || fsEl.webkitRequestFullscreen) && (document.fullscreenEnabled || document.webkitFullscreenEnabled);
+const isFull = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+const standalone = matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches || navigator.standalone;
+function goFullscreen() {
+  if (!fsOK || isFull() || standalone) return;
+  const req = fsEl.requestFullscreen ? fsEl.requestFullscreen({ navigationUI: 'hide' }) : fsEl.webkitRequestFullscreen();
+  Promise.resolve(req).then(() => screen.orientation?.lock?.('landscape')).catch(() => {});
+}
 if (isTouch) {
   document.body.classList.add('touch');
-  document.querySelectorAll('.bigIco.kbd').forEach(e => e.style.display = 'none');
+  document.querySelectorAll('.bigIco.kbd, .bigA').forEach(e => e.style.display = 'none');
   document.querySelector('.bigIco.tap').style.display = '';
-  const stick = $('stick'), knob = $('knob'); let stickId = null;
-  const moveStick = e => {
-    const r = stick.getBoundingClientRect(), R = r.width / 2;
-    let dx = e.clientX - (r.left + R), dy = e.clientY - (r.top + R); const l = Math.hypot(dx, dy);
-    if (l > R) { dx *= R / l; dy *= R / l; }
-    knob.style.transform = `translate(${dx}px,${dy}px)`;
-    const nx = dx / R, ny = dy / R, m = Math.hypot(nx, ny);
-    touch.mx = m < .15 ? 0 : nx; touch.my = m < .15 ? 0 : ny;
+  // iPhone Safari has no fullscreen API: suggest installing to the home screen instead
+  if (!fsOK && !standalone && /iPhone|iPod|iPad|Macintosh/.test(navigator.userAgent)) $('tiphint').style.display = 'block';
+  const fsBtn = $('fs');
+  const syncFs = () => fsBtn.classList.toggle('can', fsOK && !standalone && !isFull());
+  document.addEventListener('fullscreenchange', syncFs); document.addEventListener('webkitfullscreenchange', syncFs); syncFs();
+  fsBtn.addEventListener('click', e => { e.stopPropagation(); goFullscreen(); });
+  $('title').addEventListener('click', goFullscreen);
+
+  // floating joystick: appears under the thumb anywhere on the left side
+  const zone = $('stickzone'), stick = $('stick'), knob = $('knob'); let stickId = null, ox = 0, oy = 0;
+  const probe = document.createElement('div'); probe.style.cssText = 'position:fixed;visibility:hidden;padding-left:env(safe-area-inset-left,0px);padding-bottom:env(safe-area-inset-bottom,0px)'; document.body.append(probe);
+  const rest = () => {
+    const r = zone.getBoundingClientRect(), u = stick.offsetWidth, cs = getComputedStyle(probe);
+    ox = r.left + (parseFloat(cs.paddingLeft) || 0) + u * .5 + 24; oy = r.bottom - (parseFloat(cs.paddingBottom) || 0) - u * .5 - 24; place();
   };
-  const endStick = () => { stickId = null; touch.mx = touch.my = 0; knob.style.transform = ''; };
-  stick.addEventListener('pointerdown', e => { e.preventDefault(); anyInput(); stickId = e.pointerId; stick.setPointerCapture(e.pointerId); moveStick(e); });
-  stick.addEventListener('pointermove', e => { if (e.pointerId === stickId) moveStick(e); });
-  stick.addEventListener('pointerup', e => { if (e.pointerId === stickId) endStick(); });
-  stick.addEventListener('pointercancel', e => { if (e.pointerId === stickId) endStick(); });
-  document.querySelectorAll('.tb').forEach(el => {
-    const k = el.dataset.b, up = e => { touch.btn[k] = false; el.classList.remove('down'); };
-    el.addEventListener('pointerdown', e => { e.preventDefault(); anyInput(); touch.btn[k] = true; el.classList.add('down'); el.setPointerCapture(e.pointerId); });
-    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  const place = () => { const r = zone.getBoundingClientRect(); stick.style.left = (ox - r.left) + 'px'; stick.style.top = (oy - r.top) + 'px'; };
+  const moveStick = e => {
+    const R = stick.offsetWidth / 2;
+    let dx = e.clientX - ox, dy = e.clientY - oy; const l = Math.hypot(dx, dy);
+    if (l > R) { ox += dx - dx * R / l; oy += dy - dy * R / l; dx *= R / l; dy *= R / l; place(); }   // base follows the thumb when it drifts
+    knob.style.transform = `translate(${dx}px,${dy}px)`;
+    const nx = dx / R, ny = dy / R, m = Math.hypot(nx, ny), k = m < .12 ? 0 : Math.min(1, (m - .12) / .78) / m;
+    touch.mx = nx * k; touch.my = ny * k;
+  };
+  const endStick = () => { stickId = null; touch.mx = touch.my = 0; knob.style.transform = ''; stick.classList.remove('on'); rest(); };
+  zone.addEventListener('pointerdown', e => {
+    e.preventDefault(); anyInput(); if (stickId !== null) return;
+    stickId = e.pointerId; zone.setPointerCapture(e.pointerId); ox = e.clientX; oy = e.clientY; place(); stick.classList.add('on'); moveStick(e);
   });
-  document.querySelectorAll('#heroes').forEach(h => h.addEventListener('pointerdown', e => {
-    const i = [...h.children].indexOf(e.target.closest('.hero')); if (i >= 0) touch.direct = i;
-  }));
-  // drag anywhere on the 3D view to look around
+  zone.addEventListener('pointermove', e => { if (e.pointerId === stickId) moveStick(e); });
+  zone.addEventListener('pointerup', e => { if (e.pointerId === stickId) endStick(); });
+  zone.addEventListener('pointercancel', e => { if (e.pointerId === stickId) endStick(); });
+  addEventListener('resize', () => setTimeout(rest, 300)); rest();
+
+  document.querySelectorAll('.tb').forEach(el => {
+    const k = el.dataset.b, up = () => { touch.btn[k] = false; el.classList.remove('down'); };
+    el.addEventListener('pointerdown', e => { e.preventDefault(); anyInput(); touch.btn[k] = true; el.classList.add('down'); el.setPointerCapture(e.pointerId); buzz(8); });
+    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('lostpointercapture', up);
+  });
+  $('heroes').addEventListener('pointerdown', e => {
+    const h = e.target.closest('.hero'); if (!h) return;
+    e.preventDefault(); touch.direct = [...$('heroes').children].indexOf(h); buzz(12);
+  });
+  // drag anywhere else on the 3D view to look around
   let lookId = null, lx = 0, ly = 0;
-  cvs.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch') return; anyInput(); lookId = e.pointerId; lx = e.clientX; ly = e.clientY; });
-  cvs.addEventListener('pointermove', e => { if (e.pointerId !== lookId) return; mouseDX += e.clientX - lx; mouseDY += e.clientY - ly; lx = e.clientX; ly = e.clientY; });
+  cvs.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch' || lookId !== null) return; anyInput(); lookId = e.pointerId; lx = e.clientX; ly = e.clientY; });
+  cvs.addEventListener('pointermove', e => { if (e.pointerId !== lookId) return; mouseDX += (e.clientX - lx) * 1.4; mouseDY += (e.clientY - ly) * 1.1; lx = e.clientX; ly = e.clientY; touch.lookT = 0; });
   const endLook = e => { if (e.pointerId === lookId) lookId = null; };
   cvs.addEventListener('pointerup', endLook); cvs.addEventListener('pointercancel', endLook);
   document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('gesturestart', e => e.preventDefault());   // iOS pinch-zoom
+  document.addEventListener('dblclick', e => e.preventDefault(), { passive: false });
+}
+let buildHot = null;
+function updateTouchHUD() {
+  if (!isTouch || buildHot === nearBuild) return;
+  buildHot = nearBuild; const el = document.querySelector('.tb.build');
+  el.classList.toggle('hot', nearBuild); el.classList.toggle('idle', !nearBuild);
+  if (nearBuild) buzz(15);
 }
 
 const input = { mx: 0, my: 0, cx: 0, cy: 0, jump: false, jumpHeld: false, attack: false, power: false, buildHeld: false, swap: false, swapPrev: false, direct: -1 };
@@ -1475,6 +1575,13 @@ function readInput() {
 let camYaw = 0, camPitch = .5;
 const camLook = new V3(0, 2, 18);
 function updateCamera(dt) {
+  if (isTouch && !activePad) {   // gently swing the camera behind the hero while running, unless the player is steering it
+    touch.lookT += dt; const hs = Math.hypot(player.vel.x, player.vel.z);
+    if (touch.lookT > 1.2 && hs > 2 && touch.my < .5) {
+      let d = (player.yaw + Math.PI) - camYaw; d = Math.atan2(Math.sin(d), Math.cos(d));
+      camYaw += d * Math.min(1, dt * 1.1 * Math.min(1, hs / 7) * Math.min(1, Math.abs(touch.mx) + .35));
+    }
+  }
   camYaw -= input.cx * 2.6 * dt + mouseDX * .006; camPitch = clamp(camPitch + input.cy * 1.4 * dt + mouseDY * .004, .12, 1.25); mouseDX = mouseDY = 0;
   const H = hero(), dist = 14 * (H.scale > 1 ? 1.2 : 1) + (player.flying ? 3 : 0);
   const tgt = new V3(player.pos.x, player.pos.y + 1.6 * H.scale, player.pos.z);
@@ -1760,9 +1867,18 @@ function anyInput() {
   started = true;
   $('title').classList.add('hide'); $('hud').classList.add('show');
   refreshGoldHUD(); refreshHeroHUD(); renderControls();
+  $('fs').classList.add('pulse');
   $('studnum').textContent = save.studs.toLocaleString();
   SFX.token();
   prevBtn = { jump: true, attack: true, power: true, build: true, swap: true, swapPrev: true, mute: true };
+}
+// if a phone struggles, lower the render resolution step by step (never below 1x)
+let fpsN = 0, fpsT0 = 0;
+function governFPS(now) {
+  if (!fpsT0 || !started) { fpsT0 = now; fpsN = 0; return; } fpsN++;
+  if (now - fpsT0 < 3000) return;
+  const avg = (now - fpsT0) / fpsN; fpsT0 = now; fpsN = 0;
+  if (avg > 24 && pixelCap > 1 && !document.hidden) { pixelCap = Math.max(1, pixelCap - .25); renderer.setPixelRatio(Math.min(devicePixelRatio, pixelCap)); fitView(); }
 }
 function loop(now) {
   requestAnimationFrame(loop);
@@ -1789,13 +1905,20 @@ function loop(now) {
   updateGold(dt); updateTokens(dt);
   updateFX(litFX, dt); updateFX(glowFX, dt); updateRings(dt);
   updateCamera(dt); updateGuide();
-  updateHUD(dt);
+  updateHUD(dt); updateTouchHUD(); governFPS(now);
   persistT -= dt; if (persistT <= 0 && saveDirty) { persist(); persistT = 2; }
   renderer.render(scene, camera);
 }
 requestAnimationFrame(loop);
 window.__game = { player, buildables, goldBricks, save, boss, studs, targets };   // handy for debugging in the console
 addEventListener('beforeunload', () => { if (saveDirty) persist(); });
+// phones rarely fire beforeunload: save and go quiet whenever the page is hidden
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { if (saveDirty) persist(); A.pause(true); for (const k in keys) keys[k] = false; touch.btn = {}; }
+  else { A.pause(false); last = performance.now(); fpsT0 = 0; }
+});
+addEventListener('pagehide', () => { if (saveDirty) persist(); });
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
 </html>
