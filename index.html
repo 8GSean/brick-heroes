@@ -51,6 +51,17 @@
   .btn { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 15px; box-shadow: 0 3px 0 rgba(0,0,0,.4); border: 2px solid rgba(255,255,255,.8); }
   .key { min-width: 32px; height: 30px; border-radius: 7px; background: #f2f2f2; color: #222; padding: 0 6px; display: grid; place-items: center; font-size: 14px; box-shadow: 0 3px 0 #999; }
 
+  #touch { position: absolute; inset: 0; display: none; }
+  body.touch #touch { display: block; }
+  body.touch canvas { touch-action: none; }
+  #stick { position: absolute; left: 28px; bottom: 28px; width: 140px; height: 140px; border-radius: 50%; background: rgba(20,30,60,.35); border: 3px solid rgba(255,255,255,.7); pointer-events: auto; touch-action: none; }
+  #knob { position: absolute; left: 50%; top: 50%; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%; background: rgba(255,255,255,.85); box-shadow: 0 4px 0 rgba(0,0,0,.35); pointer-events: none; }
+  .tb { position: absolute; width: 68px; height: 68px; border-radius: 50%; display: grid; place-items: center; font-size: 32px; color: #fff; border: 3px solid rgba(255,255,255,.85); box-shadow: 0 5px 0 rgba(0,0,0,.4); pointer-events: auto; touch-action: none; opacity: .85; }
+  .tb.down { transform: translateY(3px) scale(.94); box-shadow: 0 2px 0 rgba(0,0,0,.4); opacity: 1; }
+  body.touch #heroes .hero { pointer-events: auto; }
+  body.touch #heroes { bottom: 8px; gap: 8px; }
+  body.touch .hero { width: 48px; height: 48px; border-width: 3px; }
+  body.touch #reset, body.touch #controls { display: none; }
   #bossbar { position: absolute; left: 50%; top: 110px; transform: translateX(-50%); display: none; align-items: center; gap: 10px; }
   #bossbar.show { display: flex; }
   #bossbar .ico { font-size: 38px; }
@@ -96,6 +107,14 @@
   <div id="bossbar"><div class="ico">🤖</div><div class="bar"><div id="bossfill"></div></div></div>
   <div id="heroes"></div>
   <div id="controls"></div>
+  <div id="touch">
+    <div id="stick"><div id="knob"></div></div>
+    <div class="tb" data-b="jump" style="right:28px;bottom:70px;background:#2ecc40">🦘</div>
+    <div class="tb" data-b="attack" style="right:108px;bottom:34px;background:#1e90ff">👊</div>
+    <div class="tb" data-b="power" style="right:108px;bottom:114px;background:#8e44ad">⚡</div>
+    <div class="tb" data-b="build" style="right:28px;bottom:150px;background:#e53935">🔨</div>
+    <div class="tb" data-b="swap" style="right:188px;bottom:74px;background:#f4c20d;width:56px;height:56px;font-size:26px">🔄</div>
+  </div>
 </div>
 <div id="goldpop"><div class="brick"></div></div>
 <div id="trophy">🏆</div>
@@ -103,7 +122,7 @@
 <div id="title">
   <h1>BRICK<br>HEROES</h1>
   <div class="sub">⭐ Mission 1 ⭐</div>
-  <div class="press"><div class="bigA">A</div><div class="bigIco">⌨️</div><div class="bigIco">🖱️</div></div>
+  <div class="press"><div class="bigA">A</div><div class="bigIco kbd">⌨️</div><div class="bigIco kbd">🖱️</div><div class="bigIco tap" style="display:none">👆</div></div>
   <button id="reset">Reset progress</button>
 </div>
 
@@ -1375,6 +1394,44 @@ $('title').addEventListener('click', anyInput);
 $('mute').addEventListener('click', e => { e.stopPropagation(); toggleMute(); });
 function toggleMute() { A.setMuted(!A.muted); $('mute').textContent = A.muted ? '🔇' : '🔊'; }
 
+// ---- touch controls (shown only on touch devices) ----
+const isTouch = (matchMedia('(pointer: coarse)').matches && matchMedia('(hover: none)').matches) || (navigator.maxTouchPoints > 0 && /Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent));
+const touch = { mx: 0, my: 0, btn: {}, direct: -1 };
+if (isTouch) {
+  document.body.classList.add('touch');
+  document.querySelectorAll('.bigIco.kbd').forEach(e => e.style.display = 'none');
+  document.querySelector('.bigIco.tap').style.display = '';
+  const stick = $('stick'), knob = $('knob'); let stickId = null;
+  const moveStick = e => {
+    const r = stick.getBoundingClientRect(), R = r.width / 2;
+    let dx = e.clientX - (r.left + R), dy = e.clientY - (r.top + R); const l = Math.hypot(dx, dy);
+    if (l > R) { dx *= R / l; dy *= R / l; }
+    knob.style.transform = `translate(${dx}px,${dy}px)`;
+    const nx = dx / R, ny = dy / R, m = Math.hypot(nx, ny);
+    touch.mx = m < .15 ? 0 : nx; touch.my = m < .15 ? 0 : ny;
+  };
+  const endStick = () => { stickId = null; touch.mx = touch.my = 0; knob.style.transform = ''; };
+  stick.addEventListener('pointerdown', e => { e.preventDefault(); anyInput(); stickId = e.pointerId; stick.setPointerCapture(e.pointerId); moveStick(e); });
+  stick.addEventListener('pointermove', e => { if (e.pointerId === stickId) moveStick(e); });
+  stick.addEventListener('pointerup', e => { if (e.pointerId === stickId) endStick(); });
+  stick.addEventListener('pointercancel', e => { if (e.pointerId === stickId) endStick(); });
+  document.querySelectorAll('.tb').forEach(el => {
+    const k = el.dataset.b, up = e => { touch.btn[k] = false; el.classList.remove('down'); };
+    el.addEventListener('pointerdown', e => { e.preventDefault(); anyInput(); touch.btn[k] = true; el.classList.add('down'); el.setPointerCapture(e.pointerId); });
+    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  });
+  document.querySelectorAll('#heroes').forEach(h => h.addEventListener('pointerdown', e => {
+    const i = [...h.children].indexOf(e.target.closest('.hero')); if (i >= 0) touch.direct = i;
+  }));
+  // drag anywhere on the 3D view to look around
+  let lookId = null, lx = 0, ly = 0;
+  cvs.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch') return; anyInput(); lookId = e.pointerId; lx = e.clientX; ly = e.clientY; });
+  cvs.addEventListener('pointermove', e => { if (e.pointerId !== lookId) return; mouseDX += e.clientX - lx; mouseDY += e.clientY - ly; lx = e.clientX; ly = e.clientY; });
+  const endLook = e => { if (e.pointerId === lookId) lookId = null; };
+  cvs.addEventListener('pointerup', endLook); cvs.addEventListener('pointercancel', endLook);
+  document.addEventListener('contextmenu', e => e.preventDefault());
+}
+
 const input = { mx: 0, my: 0, cx: 0, cy: 0, jump: false, jumpHeld: false, attack: false, power: false, buildHeld: false, swap: false, swapPrev: false, direct: -1 };
 let prevBtn = {};
 function readInput() {
@@ -1386,6 +1443,11 @@ function readInput() {
   btn.build = !!(keys.KeyB || keys.KeyF); btn.swap = !!keys.Tab;
   for (let i = 0; i < 4; i++) btn['d' + i] = !!keys['Digit' + (i + 1)];
   clickAttack = false; clickPower = false;
+  if (isTouch) {
+    mx += touch.mx; my += touch.my;
+    for (const k in touch.btn) btn[k] = btn[k] || touch.btn[k];
+    if (touch.direct >= 0) { btn['d' + touch.direct] = true; touch.direct = -1; }
+  }
   activePad = null;
   const pads = navigator.getGamepads ? navigator.getGamepads() : [];
   for (const gp of pads) {
@@ -1455,6 +1517,7 @@ function refreshHeroHUD() {
   $('heroes').innerHTML = HEROES.map((h, i) => `<div class="hero ${i === player.hero ? 'cur' : ''} ${save.heroes.includes(i) ? '' : 'locked'}" style="background:${h.color}"><img src="${portraits[i]}"></div>`).join('');
 }
 function renderControls() {
+  if (isTouch && !usingPad) { $('controls').innerHTML = ''; return; }
   const b = (t, c) => `<div class="btn" style="background:${c}">${t}</div>`, k = t => `<div class="key">${t}</div>`;
   const rows = usingPad
     ? [[b('A', '#2ecc40'), '🦘'], [b('X', '#1e90ff'), '👊'], [b('RB', '#555'), '⚡'], [b('B', '#e53935'), '🔨'], [b('Y', '#f4c20d'), '🔄']]
