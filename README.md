@@ -19,6 +19,14 @@ It's made so a kid who can't read yet still has fun: every prompt is a picture.
 | Switch hero | Y / LB | Tab, or 1–4 |
 | Mute | Back/View | M |
 
+**On a phone or tablet** the game switches to touch controls automatically. The first tap goes full screen and turns to landscape (on Android and iPad). On iPhone, use Share → Add to Home Screen to play full screen.
+- Touch and drag anywhere on the left side for a joystick that follows your thumb.
+- Use the round buttons on the right: 🦘 jump (hold to fly), 👊 punch, ⚡ power and 🔨 build. The 🔨 button lights up when you're next to a brick pile.
+- Drag anywhere else on the screen to look around. While you run, the camera slowly turns to stay behind your hero.
+- Tap a hero portrait to switch heroes.
+
+The game can be installed as an app, and after the first visit it also works offline.
+
 Heroes: red flyer (flight and lasers), shield captain (boomerang shield), big green smasher (ground pound) and web hero (web zip, triple jump). The last two are unlocked by finding their glowing tokens.
 
 ---
