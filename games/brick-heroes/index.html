@@ -1380,28 +1380,63 @@ function updatePads(dt) {
     }
   }
 }
+// A buildable is a pile of pieces. Each piece: { w, h, d, c (colour), x, y, z (centre of the piece when built),
+//   ry / rx / rz (rotation), s: 'cyl' | 'cone' (shape, default box), o (material options), uniq (own material, for flashing),
+//   part: 'name' or 'parent/name' (moving sub-group, pivots in opts.pivots) }
+// opts: { say: narration key when built, ry: turn the whole build, pivots: { partName: [x, y, z] } }
 const buildables = [];
-function addBuildable(x, z, pieces, onBuilt) {
-  const group = new THREE.Group(); group.position.set(x, 0, z); scene.add(group);
-  const list = pieces.map((p, i) => {
-    const m = new THREE.Mesh(G.box, M(p.c, p.o)); m.scale.set(p.w, p.h, p.d); m.castShadow = true; m.receiveShadow = true; group.add(m);
+const tmpV = new V3();
+function addBuildable(x, z, pieces, onBuilt, opts = {}) {
+  const group = new THREE.Group(); group.position.set(x, 0, z); group.rotation.y = opts.ry || 0; scene.add(group);
+  const parts = {}, pivot = {};
+  const partOf = name => {
+    if (!name) return { g: group, o: [0, 0, 0] };
+    if (!parts[name]) {
+      const k = name.lastIndexOf('/'), par = partOf(k >= 0 ? name.slice(0, k) : null);
+      const pv = (opts.pivots && opts.pivots[name]) || par.o;
+      const g = new THREE.Group(); g.position.set(pv[0] - par.o[0], pv[1] - par.o[1], pv[2] - par.o[2]); par.g.add(g);
+      parts[name] = g; pivot[name] = pv;
+    }
+    return { g: parts[name], o: pivot[name] };
+  };
+  const list = pieces.map(p => {
+    const { g: par, o } = partOf(p.part);
+    const mat = p.uniq ? new THREE.MeshStandardMaterial(Object.assign({ color: p.c, roughness: 0.35, metalness: 0 }, p.o || {})) : M(p.c, p.o);
+    const m = new THREE.Mesh(p.s === 'cyl' ? G.cyl : p.s === 'cone' ? G.cone : G.box, mat); m.castShadow = true; m.receiveShadow = true; par.add(m);
+    const full = p.s === 'cone' ? [p.w / .8, p.h, p.d / .8] : [p.w, p.h, p.d];
+    const ps = Math.min(1, 1.5 / Math.max(p.w, p.h, p.d));   // big pieces sit in the pile as small bricks
     const a = srng() * TAU, r = srng() * 1.3;
-    const pile = { x: Math.cos(a) * r, y: Math.min(p.h, p.w, p.d) / 2 + srng() * .5, z: Math.sin(a) * r, rx: sr(-.5, .5), ry: srng() * TAU, rz: sr(-.5, .5) };
-    m.position.set(pile.x, pile.y, pile.z); m.rotation.set(pile.rx, pile.ry, pile.rz);
-    return { m, p, pile, t: -1, ph: srng() * TAU };
+    const pile = { x: Math.cos(a) * r - o[0], y: Math.min(p.h, p.w, p.d) * ps / 2 + srng() * .5 - o[1], z: Math.sin(a) * r - o[2], rx: sr(-.5, .5), ry: srng() * TAU, rz: sr(-.5, .5) };
+    const fin = { x: p.x - o[0], y: p.y - o[1], z: p.z - o[2], rx: p.rx || 0, ry: p.ry || 0, rz: p.rz || 0 };
+    m.position.set(pile.x, pile.y, pile.z); m.rotation.set(pile.rx, pile.ry, pile.rz); m.scale.set(full[0] * ps, full[1] * ps, full[2] * ps);
+    const dur = .3 + Math.hypot(fin.x - pile.x, fin.z - pile.z) * .015;
+    return { m, p, pile, fin, full, ps, dur, t: -1, ph: srng() * TAU };
   });
   const prompt = spriteFromCanvas(PROMPT_CANVAS, 1.8); prompt.position.set(x, 3.4, z); scene.add(prompt);
-  const b = { x, z, group, pieces: list, placed: 0, timer: 0, built: false, onBuilt, prompt, t: 0 };
+  const b = { id: buildables.length, x, z, group, parts, pieces: list, placed: 0, timer: 0, built: false, onBuilt, prompt, t: 0, say: opts.say, cool: 0 };
   buildables.push(b); return b;
 }
-let nearBuild = false;
+function settlePiece(q) {
+  const f = q.fin; q.t = 1;
+  q.m.position.set(f.x, f.y, f.z); q.m.rotation.set(f.rx, f.ry, f.rz); q.m.scale.set(q.full[0], q.full[1], q.full[2]);
+}
+// THE place where a build gets finished. remote = another player finished it.
+function completeBuild(b, remote = false) {
+  if (!b || b.built) return;
+  for (const q of b.pieces) if (q.t < 1) settlePiece(q);
+  b.placed = b.pieces.length; b.built = true; b.prompt.visible = false; builtAny = true;
+  SFX.built(); confetti(new V3(b.x, 2, b.z), 50); smoke(new V3(b.x, .5, b.z), 12, .9); rumble(.5, .4, 200);
+  b.onBuilt(b);
+  say(b.say || 'built', { prio: 2, cool: 0 });
+  if (!remote) NET.send('build', { id: b.id });
+}
+let nearBuild = false, builtAny = false;
 function updateBuildables(dt) {
   player.building = false; nearBuild = false;
   const p = player.pos;
   for (const b of buildables) {
-    if (b.update && b.built) b.update(b, dt);
-    if (b.built) continue;
-    const d = Math.hypot(p.x - b.x, p.z - b.z), near = d < 4 && p.y < 3;
+    if (b.built) { b.cool = Math.max(0, b.cool - dt); if (b.update) b.update(b, dt); continue; }
+    const d = Math.hypot(p.x - b.x, p.z - b.z), near = d < 4 && p.y < 3 && !player.ride && !player.kart;
     if (near) nearBuild = true;
     b.prompt.visible = d < 30;
     const s = (near ? 2.3 : 1.7) + Math.sin(time * 6) * .15; b.prompt.scale.set(s, s, 1);
@@ -1409,30 +1444,49 @@ function updateBuildables(dt) {
     if (near && input.buildHeld && !player.flying) {
       player.building = true; player.yaw = angLerp(player.yaw, Math.atan2(b.x - p.x, b.z - p.z), .3);
       b.timer += dt;
-      if (b.timer > 0.09 && b.placed < b.pieces.length) { b.timer = 0; b.pieces[b.placed++].t = 0; SFX.click(); rumble(.1, .15, 40); }
+      if (b.timer > Math.min(.09, 3 / b.pieces.length) && b.placed < b.pieces.length) { b.timer = 0; b.pieces[b.placed++].t = 0; SFX.click(); rumble(.1, .15, 40); }
       if (Math.random() < dt * 20) sparkle(new V3(b.x + rand(-1, 1), rand(.5, 2.5), b.z + rand(-1, 1)), pick(RAINBOW), 1, 3, .15);
     }
     let done = b.placed === b.pieces.length;
-    b.pieces.forEach((q, i) => {
+    for (const q of b.pieces) {
       if (q.t < 0) {
         const hop = Math.max(0, Math.sin(time * (near ? 9 : 4) + q.ph)) * (near ? .25 : .08);
         q.m.position.y = q.pile.y + hop;
-        return;
+        continue;
       }
       if (q.t < 1) {
-        q.t = Math.min(1, q.t + dt / 0.3); const k = q.t, e = k * k * (3 - 2 * k);
-        q.m.position.set(lerp(q.pile.x, q.p.x, e), lerp(q.pile.y, q.p.y, e) + Math.sin(k * Math.PI) * 2.2, lerp(q.pile.z, q.p.z, e));
-        q.m.rotation.set(lerp(q.pile.rx, 0, e), lerp(q.pile.ry, q.p.ry || 0, e), lerp(q.pile.rz, 0, e));
-        if (q.t >= 1) sparkle(new V3(b.x + q.p.x, q.p.y, b.z + q.p.z), '#ffffff', 3, 3, .12);
+        q.t = Math.min(1, q.t + dt / q.dur); const k = q.t, e = k * k * (3 - 2 * k), f = q.fin, pl = q.pile, sc = lerp(q.ps, 1, e);
+        q.m.position.set(lerp(pl.x, f.x, e), lerp(pl.y, f.y, e) + Math.sin(k * Math.PI) * 2.2, lerp(pl.z, f.z, e));
+        q.m.rotation.set(lerp(pl.rx, f.rx, e), lerp(pl.ry, f.ry, e), lerp(pl.rz, f.rz, e));
+        q.m.scale.set(q.full[0] * sc, q.full[1] * sc, q.full[2] * sc);
+        if (q.t >= 1) { settlePiece(q); sparkle(q.m.getWorldPosition(tmpV), '#ffffff', 3, 3, .12); }
       }
       if (q.t < 1) done = false;
-    });
-    if (done) {
-      b.built = true; b.prompt.visible = false;
-      SFX.built(); confetti(new V3(b.x, 2, b.z), 50); smoke(new V3(b.x, .5, b.z), 12, .9); rumble(.5, .4, 200);
-      b.onBuilt(b);
     }
+    if (done) completeBuild(b);
   }
+  // first time near a brick pile: tell the player how to build (with their own button)
+  if (nearBuild && !builtAny) say(usingPad ? 'holdPad' : isTouch ? 'holdTouch' : 'holdKey', { cool: 30 });
+}
+
+// ---------- rides: the player is carried by something (rocket, balloon, merry-go-round, slide, cannon) ----------
+// A ride: { place(p, dt) puts the player at the right spot, yaw?, pose: 'sit'|'cheer'|'fly', done, exit: V3 velocity, jumpOff, onEnd() }
+function startRide(r) {
+  if (player.ride || player.kart) return false;
+  r.done = false; player.ride = r; player.pounding = false; player.dance = 0; return true;
+}
+function endRide(exitV) {
+  const r = player.ride; if (!r) return;
+  player.ride = null; r.onEnd?.();
+  if (exitV) player.vel.copy(exitV); else { player.vel.set(0, hero().jump * .85, 0); SFX.jump(); }
+  player.onGround = false; player.jumps = 1; player.airT = 0;
+}
+function rideStep(dt) {
+  const r = player.ride, v = player.vel;
+  r.place(player.pos, dt);
+  if (r.yaw !== undefined) player.yaw = angLerp(player.yaw, r.yaw, 1 - Math.exp(-10 * dt));
+  v.set(0, 0, 0); player.onGround = true; player.jumps = 0; player.airT = 0;
+  if (r.done) endRide(r.exit); else if (input.jump && r.jumpOff !== false) endRide(null);
 }
 
 // =====================================================================
@@ -1442,6 +1496,9 @@ const player = {
   pos: new V3(0, 0, 18), vel: new V3(), yaw: Math.PI, hero: save.heroes.includes(0) ? 0 : save.heroes[0],
   onGround: true, jumps: 0, airT: 0, attackT: 0, attackCd: 0, arm: 0, powerCd: 0, powerT: 0, pounding: false,
   phase: 0, building: false, swapT: 0, flying: false, flip: 0, dance: 0, figs: [],
+  ride: null,   // something carrying the player (see startRide)
+  kart: null,   // the race-car buildable while driving
+  disco: false, // standing on the robot's dance floor
 };
 const hero = () => HEROES[player.hero];
 HEROES.forEach((h, i) => { const f = makeMinifig(h); f.visible = i === player.hero; scene.add(f); player.figs.push(f); });
@@ -1606,21 +1663,26 @@ function updatePlayer(dt) {
   const H = hero(), p = player.pos, v = player.vel;
   if (input.swap) swapHero(1); if (input.swapPrev) swapHero(-1);
   if (input.direct >= 0) swapHero(input.direct, true);
-
+  if (player.ride) rideStep(dt); else movePlayer(dt, H, p, v);
+  animatePlayer(dt, H, p, v);
+}
+function movePlayer(dt, H, p, v) {
+  const kart = player.kart;
   const fwdX = -Math.sin(camYaw), fwdZ = -Math.cos(camYaw), rX = Math.cos(camYaw), rZ = -Math.sin(camYaw);
   const mvx = rX * input.mx + fwdX * -input.my, mvz = rZ * input.mx + fwdZ * -input.my, mag = Math.hypot(mvx, mvz);
   const busy = player.building || player.dance > 0;
-  const sp = busy ? 0 : H.speed * (player.flying ? 1.35 : 1);
-  const acc = player.onGround ? 14 : 5;
+  const sp = busy ? 0 : kart ? CONFIG.kartSpeed : H.speed * (player.flying ? 1.35 : 1);
+  const acc = kart ? (player.onGround ? 5 : 2) : player.onGround ? 14 : 5;
   v.x = lerp(v.x, mvx * sp, 1 - Math.exp(-acc * dt)); v.z = lerp(v.z, mvz * sp, 1 - Math.exp(-acc * dt));
-  if (mag > .1 && !busy) player.yaw = angLerp(player.yaw, Math.atan2(mvx, mvz), 1 - Math.exp(-14 * dt));
+  if (mag > .1 && !busy) player.yaw = angLerp(player.yaw, Math.atan2(mvx, mvz), 1 - Math.exp(-(kart ? 6 : 14) * dt));
 
-  if (input.jump && !busy) {
+  if (input.jump && kart) exitKart();
+  else if (input.jump && !busy) {
     if (player.onGround) { v.y = H.jump; player.onGround = false; player.jumps = 1; SFX.jump(); smoke(p, 4, .4); }
     else if (player.jumps < H.jumps) { v.y = H.jump * .92; player.jumps++; player.flip = 1; SFX.djump(); sparkle(new V3(p.x, p.y + .5, p.z), '#ffffff', 10, 4, .15); ring(p, 1.5, '#ffffff', .3); }
   }
   player.flying = false;
-  if (H.fly && !player.onGround && input.jumpHeld && player.airT > .22 && p.y < 60) {
+  if (H.fly && !kart && !player.onGround && input.jumpHeld && player.airT > .22 && p.y < 60) {
     v.y = Math.min(v.y + 75 * dt, 8); player.flying = true;
     for (const side of [-1, 1]) fx(glowFX, p.x - Math.cos(player.yaw) * side * .2, p.y + .1, p.z + Math.sin(player.yaw) * side * .2, { vx: rand(-1, 1), vy: rand(-9, -6), vz: rand(-1, 1), s: rand(.15, .3), color: pick(['#ffec5c', '#ff9f1c', '#ffffff']), life: .25, grav: 0, shrink: true });
     if (Math.random() < dt * 12) SFX.jet();
@@ -1629,13 +1691,17 @@ function updatePlayer(dt) {
   v.y -= GRAV * dt; v.y = Math.max(v.y, -42);
 
   player.attackCd -= dt; player.attackT = Math.max(0, player.attackT - dt);
-  if (input.attack && player.attackCd <= 0 && !busy) { player.attackCd = .26; player.attackT = .22; player.arm ^= 1; meleeHit(); }
+  if (input.attack && player.attackCd <= 0 && !busy) {
+    if (kart) { player.attackCd = .5; SFX.honk(); sparkle(new V3(p.x + Math.sin(player.yaw) * 2, p.y + 1, p.z + Math.cos(player.yaw) * 2), '#ffe066', 8, 4, .2); }
+    else { player.attackCd = .26; player.attackT = .22; player.arm ^= 1; meleeHit(); }
+  }
   player.powerCd -= dt; player.powerT = Math.max(0, player.powerT - dt);
-  if (input.power && player.powerCd <= 0 && !busy) usePower(H);
+  if (input.power && player.powerCd <= 0 && !busy && !kart) usePower(H);
 
   // horizontal
   const prevX = p.x, prevZ = p.z, prevY = p.y;
   p.x += v.x * dt; p.z += v.z * dt;
+  if (kart) kartBump(v);
   pushOut(p, H.r, H.h); blockBySmashables(p, H.r);
   // island + pier boundary
   if (p.z > 108) { if (prevZ > 108) { p.x = clamp(p.x, -3.4, 3.4); p.z = Math.min(p.z, 129); } else if (Math.abs(p.x) > 3.4) p.z = 108; }
@@ -1657,7 +1723,8 @@ function updatePlayer(dt) {
     if (player.onGround && p.y > gnd + .05) { player.onGround = false; player.jumps = 0; }
     player.airT += dt;
   }
-
+}
+function animatePlayer(dt, H, p, v) {
   // animation
   const fig = player.figs[player.hero];
   fig.position.copy(p); fig.rotation.y = player.yaw;
@@ -1665,8 +1732,12 @@ function updatePlayer(dt) {
   if (player.flip > 0) player.flip = Math.max(0, player.flip - dt * 2.8);
   player.dance = Math.max(0, player.dance - dt);
   if (player.swapT > 0) { player.swapT = Math.max(0, player.swapT - dt * 3); fig.scale.setScalar(H.scale * (1 + Math.sin(player.swapT * Math.PI) * .3)); } else fig.scale.setScalar(H.scale);
-  poseFig(fig, { walk: player.onGround ? Math.min(1, hs / 6) : 0, phase: player.phase, air: !player.onGround && !player.flying, fly: player.flying,
-    attack: player.attackT / .22, arm: player.arm, build: player.building, power: player.powerT, flip: (1 - player.flip) * TAU * (player.flip > 0 ? 1 : 0), dance: player.dance > 0, t: time });
+  const rp = player.ride?.pose, kart = player.kart, still = player.ride || kart;
+  if (kart) placeKart(dt, hs);
+  poseFig(fig, { walk: player.onGround && !still ? Math.min(1, hs / 6) : 0, phase: player.phase, air: !player.onGround && !player.flying && !still, fly: player.flying || rp === 'fly',
+    sit: rp === 'sit' || !!kart, cheer: rp === 'cheer',
+    attack: player.attackT / .22, arm: player.arm, build: player.building, power: player.powerT, flip: (1 - player.flip) * TAU * (player.flip > 0 ? 1 : 0),
+    dance: player.dance > 0 || (player.disco && hs < 1.5 && !still), t: time });
 }
 
 // =====================================================================
