@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Build With Claude</title>
+<meta name="description" content="How students make and change games in the Brick Arcade with the Claude Code app, with typing practice built in.">
+<link rel="icon" type="image/png" href="../games/brick-heroes/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #1d2a4d; --gold: #ffd23f; --purple: #8d5cf6; --good: #2fae4a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--ink);
+         background: linear-gradient(#c9b8ff, #eee8ff 380px, #f7f5ff); min-height: 100vh;
+         padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 60px max(16px, env(safe-area-inset-left)); }
+  .fun { font-family: 'Lilita One', 'Arial Rounded MT Bold', system-ui, sans-serif; font-weight: 400; }
+  #home { position: fixed; left: 14px; top: 14px; z-index: 50; width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,.85);
+          box-shadow: 0 3px 10px rgba(0,0,0,.3); display: flex; align-items: center; justify-content: center; font-size: 30px; text-decoration: none; }
+  main { max-width: 980px; margin: 0 auto; }
+  h1 { text-align: center; margin: 4px 0 6px; font-size: clamp(40px, 8vw, 78px); color: var(--gold); -webkit-text-stroke: 3px #5b2fc4; paint-order: stroke fill; text-shadow: 0 6px 0 #5b2fc4; }
+  .sub { text-align: center; font-size: 20px; margin: 0 0 26px; }
+  h2 { font-size: 34px; margin: 38px 0 12px; color: #5b2fc4; }
+  .say { border: 0; background: #fff; border-radius: 50%; width: 44px; height: 44px; font-size: 22px; cursor: pointer; box-shadow: 0 3px 0 #c9c1e6; vertical-align: middle; flex: none; }
+  .say:active { transform: translateY(2px); box-shadow: none; }
+
+  /* the 4 steps */
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+  .step { background: #fff; border-radius: 22px; padding: 16px; box-shadow: 0 6px 0 #d8d0f3; text-align: center; position: relative; }
+  .step .n { position: absolute; left: -8px; top: -8px; width: 40px; height: 40px; border-radius: 50%; background: var(--purple); color: #fff; font-size: 24px; display: flex; align-items: center; justify-content: center; }
+  .step .pic { font-size: 64px; line-height: 1.2; }
+  .step .t { font-size: 24px; margin: 4px 0; }
+  .step p { margin: 6px 0 10px; font-size: 16px; }
+
+  /* typing studio */
+  #studio { background: #fff; border-radius: 26px; padding: 18px; box-shadow: 0 8px 0 #d8d0f3; }
+  .pick { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+  .pick button { border: 0; border-radius: 16px; padding: 10px 14px; font-size: 18px; cursor: pointer; background: #f1edff; color: var(--ink); box-shadow: 0 3px 0 #d8d0f3; }
+  .pick button.on { background: var(--purple); color: #fff; box-shadow: 0 3px 0 #5b2fc4; }
+  #target { font-size: clamp(22px, 3.6vw, 34px); line-height: 1.5; letter-spacing: .5px; padding: 14px 16px; border-radius: 16px; background: #faf8ff; border: 3px dashed #d8d0f3; min-height: 110px; word-wrap: break-word; }
+  #target span { border-radius: 4px; }
+  #target .ok { color: var(--good); }
+  #target .bad { background: #ffd6d6; color: #c0262d; }
+  #target .cur { background: var(--gold); box-shadow: 0 3px 0 #c99a00; animation: blink 1s infinite; }
+  #target .rest { color: #9b95b5; }
+  @keyframes blink { 50% { background: #fff1a8; } }
+  .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 14px; }
+  .big { border: 0; border-radius: 18px; padding: 12px 20px; font-size: 22px; cursor: pointer; color: #fff; background: var(--purple); box-shadow: 0 4px 0 #5b2fc4; }
+  .big.green { background: var(--good); box-shadow: 0 4px 0 #1d7a31; }
+  .big:disabled { opacity: .45; cursor: default; }
+  #stars { font-size: 28px; margin-left: auto; }
+  #typebox { position: absolute; opacity: 0; pointer-events: none; }
+  #done { display: none; text-align: center; font-size: 26px; margin-top: 14px; }
+  #done.show { display: block; animation: pop .5s cubic-bezier(.3,1.8,.5,1); }
+  @keyframes pop { from { transform: scale(.3); } }
+  .tap { font-size: 15px; opacity: .75; }
+
+  /* teacher notes */
+  details { background: #fff; border-radius: 20px; padding: 14px 18px; box-shadow: 0 5px 0 #d8d0f3; margin-top: 12px; font-size: 17px; line-height: 1.5; }
+  summary { font-size: 22px; cursor: pointer; }
+  code { background: #f1edff; padding: 2px 6px; border-radius: 6px; }
+  .confetti { position: fixed; top: -20px; font-size: 26px; pointer-events: none; animation: fall 1.6s ease-in forwards; z-index: 99; }
+  @keyframes fall { to { transform: translateY(110vh) rotate(540deg); } }
+</style>
+</head>
+<body>
+<a id="home" href="../index.html" title="Back to the arcade" aria-label="Back to the arcade">🏠</a>
+
+<main>
+  <h1 class="fun">BUILD WITH CLAUDE</h1>
+  <p class="sub">You tell Claude your idea. Claude writes the code. You play it! 🎮</p>
+
+  <h2 class="fun">How it works</h2>
+  <div class="steps">
+    <div class="step"><div class="n fun">1</div><div class="pic">📱💻</div><div class="t fun">Open Claude</div>
+      <p>Open the Claude Code app and pick the <b>brick-heroes</b> project.</p>
+      <button class="say" data-say="Step one. Open the Claude Code app, and pick the brick heroes project.">🔊</button></div>
+    <div class="step"><div class="n fun">2</div><div class="pic">💭⌨️</div><div class="t fun">Type your wish</div>
+      <p>Say what you want to add or change. Small wishes work best!</p>
+      <button class="say" data-say="Step two. Type your wish. Say what you want to add or change. Small wishes work best!">🔊</button></div>
+    <div class="step"><div class="n fun">3</div><div class="pic">🤖✨</div><div class="t fun">Claude builds</div>
+      <p>Claude changes the game for you. Ask it to show you how it works.</p>
+      <button class="say" data-say="Step three. Claude builds it for you. Wait and watch!">🔊</button></div>
+    <div class="step"><div class="n fun">4</div><div class="pic">🎮🎉</div><div class="t fun">Play &amp; tweak</div>
+      <p>Try it! Then tell Claude what to make bigger, faster or sillier.</p>
+      <button class="say" data-say="Step four. Play it! Then tell Claude what to make bigger, faster, or sillier.">🔊</button></div>
+  </div>
+
+  <h2 class="fun">⌨️ Typing Studio</h2>
+  <p>Pick a wish, type it here letter by letter (the yellow box shows the next key), then copy it into Claude!</p>
+  <div id="studio">
+    <div class="pick" id="pick"></div>
+    <div id="target" tabindex="0" aria-label="Type the wish here"></div>
+    <input id="typebox" autocomplete="off" autocapitalize="off" spellcheck="false" aria-hidden="true">
+    <div class="bar">
+      <button class="say" id="sayWish" title="Read it to me">🔊</button>
+      <button class="big" id="restart">↺ Again</button>
+      <button class="big green" id="copy" disabled>📋 Copy for Claude</button>
+      <span class="tap">👆 tap the box to type on a tablet</span>
+      <span id="stars"></span>
+    </div>
+    <div id="done">🎉 You typed it! Now press <b>📋 Copy</b> and paste it into Claude. 🎉</div>
+  </div>
+
+  <h2 class="fun">🧑‍🏫 For grown-ups</h2>
+  <details open>
+    <summary>Setting up a class</summary>
+    <ol>
+      <li>Open <a href="https://claude.ai/code">claude.ai/code</a> (or the Claude app → Code) and connect the GitHub account that has this repository.</li>
+      <li>Start a session on the <b>brick-heroes</b> repository. Claude reads <code>CLAUDE.md</code>, which explains the arcade rules (no losing, no reading needed, works with a controller), so students' wishes come out the same way.</li>
+      <li>Each game is one file: <code>games/&lt;name&gt;/index.html</code>. A <code>CONFIG</code> block near the top holds easy-to-change numbers and colours.</li>
+      <li>Ask Claude to put the work on a branch and open a pull request. When you merge it, the game updates on the website.</li>
+    </ol>
+  </details>
+  <details>
+    <summary>Tips for good wishes</summary>
+    <ul>
+      <li><b>One wish at a time.</b> "Make the T-Rex purple" works better than ten changes at once.</li>
+      <li><b>Name the game:</b> "In Drum Jungle, …"</li>
+      <li><b>Say how it should feel:</b> silly, faster, bouncier, sparkly, louder.</li>
+      <li><b>Ask Claude to explain:</b> "Show me the line that sets the jump height and explain it like I'm 8." It's a great way to start reading code.</li>
+      <li><b>Something broke?</b> Just say what happened: "Now the truck falls through the floor." Claude can fix it or undo it.</li>
+      <li>Typing wishes is real reading, spelling and typing practice. Little ones can say the wish while a grown-up or older buddy types.</li>
+    </ul>
+  </details>
+  <details>
+    <summary>Bigger project ideas</summary>
+    <ul>
+      <li>"Make a new game in <code>games/</code> where I'm a snowball that grows as it rolls. Follow the rules in CLAUDE.md and add it to the arcade page."</li>
+      <li>"Add a second player with another controller to Monster Truck Junkyard."</li>
+      <li>"Add a new station to the Learning Lab that teaches shapes and colours."</li>
+      <li>"Make a hat shop in Brick Heroes where I spend studs on silly hats."</li>
+    </ul>
+  </details>
+</main>
+
+<script>
+// Wishes kids can type. Add more! Keep them short and fun.
+const WISHES = [
+  { icon: '🦖', text: 'In Dino Island Rescue, make the T-Rex purple with sparkly spots.' },
+  { icon: '🐶', text: 'In Space Pup Planets, add a new planet with a cat alien who lost her yarn.' },
+  { icon: '🛻', text: 'In Monster Truck Junkyard, make the jump twice as high.' },
+  { icon: '🥁', text: 'In Drum Jungle, add a cow that moos when I bonk it.' },
+  { icon: '🦸', text: 'In Brick Heroes, give the red hero a funny hat.' },
+  { icon: '🔤', text: 'In the Learning Lab, add the word DOG with a picture of a dog.' },
+  { icon: '🌈', label: 'A new game!', text: 'Make a new game where I paint the world with rainbow colors.' },
+];
+
+// ---------- talking ----------
+function say(text) {
+  if (!window.speechSynthesis) return;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.rate = .9; u.pitch = 1.1; speechSynthesis.speak(u); } catch (e) {}
+}
+document.querySelectorAll('.say[data-say]').forEach(b => b.onclick = () => say(b.dataset.say));
+
+// ---------- little sounds ----------
+let actx = null;
+function beep(freq, len = .07, type = 'triangle', vol = .07) {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime;
+    o.type = type; o.frequency.value = freq; g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + len);
+    o.connect(g).connect(actx.destination); o.start(t); o.stop(t + len);
+  } catch (e) {}
+}
+
+// ---------- typing studio ----------
+const pick = document.getElementById('pick'), target = document.getElementById('target'), typebox = document.getElementById('typebox');
+const copyBtn = document.getElementById('copy'), done = document.getElementById('done'), starsEl = document.getElementById('stars');
+let wish = 0, typed = '', mistakes = 0;
+
+WISHES.forEach((w, i) => {
+  const b = document.createElement('button'); b.textContent = w.icon + ' ' + (w.label || w.text.split(',')[0].replace(/^In (the )?/, ''));
+  b.onclick = () => choose(i); pick.appendChild(b);
+});
+function choose(i, focus = true) {
+  wish = i; typed = ''; mistakes = 0;
+  [...pick.children].forEach((b, j) => b.classList.toggle('on', j === i));
+  done.classList.remove('show'); copyBtn.disabled = true; render(); if (focus) target.focus({ preventScroll: true });
+}
+function render() {
+  const text = WISHES[wish].text; let html = '';
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i] === ' ' ? '&nbsp;' : text[i].replace('<', '&lt;');
+    const cls = i < typed.length ? (typed[i] === text[i] ? 'ok' : 'bad') : i === typed.length ? 'cur' : 'rest';
+    html += `<span class="${cls}">${ch}</span>` + (text[i] === ' ' ? '<wbr>' : '');
+  }
+  target.innerHTML = html;
+  const right = [...typed].filter((c, i) => c === text[i]).length;
+  starsEl.textContent = '⭐'.repeat(Math.min(5, Math.floor(right / Math.max(1, text.length) * 5)));
+}
+function key(k) {
+  const text = WISHES[wish].text;
+  if (k === 'Backspace') { typed = typed.slice(0, -1); beep(300); render(); return; }
+  if (k.length !== 1 || typed.length >= text.length) return;
+  const want = text[typed.length];
+  // forgiving: upper/lower case both count, so little ones don't need Shift
+  if (k.toLowerCase() === want.toLowerCase()) { typed += want; beep(520 + (typed.length % 8) * 60); }
+  else { mistakes++; beep(160, .12, 'sine', .05); target.animate([{ transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'none' }], 160); return; }
+  render();
+  if (typed.length === text.length) finish();
+}
+function finish() {
+  done.classList.add('show'); copyBtn.disabled = false; say('You did it! Great typing!');
+  [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => beep(f, .18), i * 110));
+  for (let i = 0; i < 30; i++) {
+    const c = document.createElement('div'); c.className = 'confetti'; c.textContent = ['🧱', '⭐', '🎉', '✨'][i % 4];
+    c.style.left = Math.random() * 100 + 'vw'; c.style.animationDelay = Math.random() * .6 + 's';
+    document.body.appendChild(c); setTimeout(() => c.remove(), 2400);
+  }
+}
+// typing works anywhere on the page, no need to click the box first
+addEventListener('keydown', e => {
+  if (e.target === typebox) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key.length === 1 || e.key === 'Backspace') { e.preventDefault(); key(e.key); }
+});
+// tablets: tapping the box opens the on-screen keyboard through a hidden input
+target.addEventListener('click', () => { if (matchMedia('(hover: none)').matches) typebox.focus(); });
+typebox.addEventListener('input', () => { for (const ch of typebox.value) key(ch); typebox.value = ''; });
+typebox.addEventListener('keydown', e => { if (e.key === 'Backspace') key('Backspace'); });
+document.getElementById('restart').onclick = () => choose(wish);
+document.getElementById('sayWish').onclick = () => say(WISHES[wish].text);
+copyBtn.onclick = async () => {
+  try { await navigator.clipboard.writeText(WISHES[wish].text); copyBtn.textContent = '✅ Copied!'; }
+  catch (e) { copyBtn.textContent = '🙈 Select the words and copy'; }
+  setTimeout(() => copyBtn.textContent = '📋 Copy for Claude', 1800);
+};
+addEventListener('keydown', e => { if (e.key === 'Escape') location.href = '../index.html'; });
+choose(0, false);
+</script>
+</body>
+</html>
