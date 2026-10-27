@@ -155,7 +155,7 @@ const CONFIG = {
   dinos: {
     rex:     { name: 'T-Rex',   speed: 9,   jump: 11, radius: 1.3, height: 3.6, color: '#4caf50', belly: '#ffe082', camDist: 13 },
     ptero:   { name: 'Ptero',   speed: 10,  jump: 9,  radius: 1.0, height: 2.6, color: '#ff8a3d', belly: '#ffd8a8', camDist: 13,
-               flap: 9.5, glideFall: 3, maxFly: 28 },
+               flap: 9.5, lift: 7, glideFall: 4.5, maxFly: 28 },
     brachio: { name: 'Longneck', speed: 7.5, jump: 8, radius: 1.5, height: 4.2, color: '#4fb3e8', belly: '#e1f5fe', camDist: 16 },
   },
   stompRadius: 7,      // T-Rex stomp reach
@@ -1041,7 +1041,7 @@ const babies = BABIES.map((def, id) => {
   const b = { id, def, need: def.need, state: 'egg', pos: new V3(def.x, 0, def.z), phase: rand(0, TAU), tgt: new V3(), hopT: 0, chirpT: rand(2, 6), wob: 0, fly: null };
   b.eggMesh = rigid(scene, eggParts(def.c), 0, 0, 0);
   b.mesh = new THREE.Group(); rigid(b.mesh, babyParts(def)); scene.add(b.mesh); b.mesh.visible = false;
-  b.beam = new THREE.Mesh(beamGeo, new THREE.MeshBasicMaterial({ color: def.c, map: BEAM_TEX, transparent: true, opacity: 0.55, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }));
+  b.beam = new THREE.Mesh(beamGeo, new THREE.MeshBasicMaterial({ color: def.c, map: BEAM_TEX, transparent: true, opacity: 0.55, depthWrite: false, fog: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }));
   scene.add(b.beam);
   const pm = new THREE.Group(); rigid(pm, babyParts(def)); pm.rotation.y = 0.5;
   b.pic = snapshot(pm, 80, new V3(1.4, 2.0, 3.6), new V3(0, 0.75, 0.1)); b.picOn = b.pic.toDataURL(); b.picOff = silhouette(b.pic, 'rgba(30,45,80,0.75)').toDataURL();
@@ -1180,7 +1180,7 @@ function respawn() {
 }
 function nearestPileInRange(r) { let best = null, bd = r; for (const p of piles) { if (!p.alive) continue; const d = d2(p.x, p.z, player.pos.x, player.pos.z) - 2; if (d < bd) { bd = d; best = p; } } return best; }
 function nestEggInRange() {
-  for (const b of babies) { if (b.state !== 'egg' || b.need !== 'nest') continue; if (d2(b.pos.x, b.pos.z, player.pos.x, player.pos.z) < CONFIG.neckReach && player.pos.y > b.pos.y - 9) return b; }
+  for (const b of babies) { if (b.state !== 'egg' || b.need !== 'nest') continue; if (d2(b.pos.x, b.pos.z, player.pos.x, player.pos.z) < CONFIG.neckReach && player.pos.y > b.pos.y - 12) return b; }
   return null;
 }
 function doStomp() {
@@ -1245,10 +1245,11 @@ function updatePlayer(dt) {
   let grav = CONFIG.gravity;
   if (d.key === 'ptero') {
     if (player.jumpBuf > 0 && P.y < C.maxFly) { V.y = Math.max(V.y, C.flap); player.jumpBuf = 0; player.onGround = false; player.flapT = 0.3; st.flapK = 1; SFX.flap(); if (P.y - groundAt(P.x, P.z, P.y) < 0.5) { smoke(P, 6, 0.6, ['#ffffff', '#fff3c4']); st.squash = -0.25; } }
-    else if (input.jumpHeld && !player.onGround) {
-      player.flapT -= dt; if (player.flapT <= 0 && P.y < C.maxFly) { V.y = Math.max(V.y, C.flap * 0.8); player.flapT = 0.32; st.flapK = 1; SFX.flap(); }
-      if (V.y < -C.glideFall) V.y = -C.glideFall; grav *= 0.7;
-    }
+    else if (input.jumpHeld && !player.onGround) {   // keep holding = keep flying up
+      player.flapT -= dt; if (player.flapT <= 0) { player.flapT = 0.3; st.flapK = 1; SFX.flap(); }
+      const lift = C.lift * clamp((C.maxFly - P.y) / 4, 0, 1);
+      V.y += (lift - V.y) * (1 - Math.exp(-4 * dt)); grav = 0;
+    } else if (!player.onGround && V.y < -C.glideFall) V.y = -C.glideFall;   // let go = gentle glide down
   } else if (player.jumpBuf > 0 && player.coyote > 0) {
     V.y = C.jump * (wet && d.key !== 'brachio' ? 0.8 : 1); player.jumpBuf = 0; player.coyote = 0; player.onGround = false; SFX.jump(); st.squash = -0.3; st.sqV = 0;
   }
@@ -1729,7 +1730,12 @@ function anyInput() {
 }
 function loop(now) {
   requestAnimationFrame(loop);
-  const dt = Math.min(0.05, (now - last) / 1000); last = now; time += dt;
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  tick(dt);
+  renderer.render(scene, camera);
+}
+function tick(dt) {
+  time += dt;
   readInput();
   if (started) updatePlayer(dt);
   else { const d = curDino(); d.root.position.copy(player.pos); d.root.rotation.y = player.yaw; animateDino(d, dt, { speed: 0, air: false }); }
@@ -1751,7 +1757,6 @@ function loop(now) {
   }
   updateHUD(dt);
   persistT += dt; if (persistT > 3) { persistT = 0; persist(); }
-  renderer.render(scene, camera);
 }
 requestAnimationFrame(loop);
 
@@ -1763,7 +1768,9 @@ window.__game = {
   unlock(i) { unlockDino(i); },
   face(yaw) { player.yaw = yaw; camYaw = yaw + Math.PI; },
   guide() { guideT = 99; },
-  scene, renderer, camera,
+  scene, renderer, camera, keys,
+  sim(sec, hold = []) { for (const k of hold) keys[k] = true; for (let t = 0; t < sec; t += 1 / 30) tick(1 / 30); for (const k of hold) keys[k] = false; tick(1 / 30); return this.info(); },
+  tap(k) { keys[k] = true; tick(1 / 30); keys[k] = false; tick(1 / 30); return this.info(); },
   prof2() {
     const gl = renderer.getContext(), px = new Uint8Array(4), fin = () => gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
     const tr = () => { const t = performance.now(); renderer.render(scene, camera); fin(); return +(performance.now() - t).toFixed(0); };
