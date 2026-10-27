@@ -97,6 +97,7 @@
   #stage { position: fixed; left: 0; top: 0; bottom: 0; width: 68vw; display: none; flex-direction: column; align-items: center; justify-content: space-evenly;
     padding: calc(var(--st) + 76px) 16px calc(var(--sb) + 12px) calc(var(--sl) + 16px); }
   #stage.show { display: flex; }
+  @media (max-width: 760px) { #stInfo { top: calc(var(--st) + 76px); left: calc(var(--sl) + 14px); } #stInfo .ic { font-size: 28px; } }
   @media (orientation: portrait) { #stage { width: 100vw; top: 20vh; padding-top: 6px; padding-left: 12px; padding-right: 12px; } }
   #promptBar { display: flex; align-items: center; gap: 18px; }
   #sayBtn { width: 76px; height: 76px; border-radius: 50%; background: #ffd23f; border: 5px solid #fff; font-size: 36px; box-shadow: 0 6px 0 #c79a00, 0 10px 16px rgba(0,0,0,.25);
@@ -167,7 +168,7 @@
   .kb .row { display: flex; gap: var(--kg); }
   .kb .row:nth-child(2) { transform: translateX(calc(var(--kw) * .3)); }
   .kb .row:nth-child(3) { transform: translateX(calc(var(--kw) * -.2)); }
-  .key { --c: #ddd; width: var(--kw); height: var(--kw); border-radius: calc(var(--kw) * .2); background: var(--c); color: var(--ink); font-size: calc(var(--kw) * .52);
+  .key { --c: #ddd; --d: rgba(0,0,0,.28); width: var(--kw); height: var(--kw); border-radius: calc(var(--kw) * .2); background: var(--c); color: var(--ink); font-size: calc(var(--kw) * .52);
     display: grid; place-items: center; box-shadow: 0 5px 0 rgba(0,0,0,.28), inset 0 -4px 0 rgba(0,0,0,.1), inset 0 3px 0 rgba(255,255,255,.4); cursor: pointer; position: relative; transition: transform .1s; }
   .key.home::after { content: ''; position: absolute; bottom: 14%; left: 36%; right: 36%; height: 4px; border-radius: 2px; background: rgba(0,0,0,.35); }
   .key.target { background: #fff; color: #e53935; z-index: 2; box-shadow: 0 0 0 5px var(--c), 0 0 26px 10px #ffe066, 0 5px 0 rgba(0,0,0,.25); animation: keyb .8s ease-in-out infinite; }
@@ -194,8 +195,8 @@
   #panel { background: linear-gradient(#fff9e6, #ffe9b3); border-radius: 30px; border: 6px solid #fff; box-shadow: 0 12px 0 #c79a00, 0 20px 40px rgba(0,0,0,.35);
     padding: 22px; max-width: 900px; width: 100%; max-height: 100%; display: flex; flex-direction: column; align-items: center; gap: 14px; position: relative; color: var(--ink); animation: popin .45s cubic-bezier(.3,1.6,.5,1); }
   .bookhead { font-size: clamp(28px, 5vh, 44px); display: flex; align-items: center; gap: 12px; }
-  .bookgrid { display: grid; grid-template-columns: repeat(6, 1fr); gap: clamp(6px, 1.4vh, 14px); width: 100%; }
-  .stk { aspect-ratio: 1; border-radius: 18px; display: grid; place-items: center; font-size: clamp(30px, min(5vw, 7vh), 62px); background: #fff; box-shadow: 0 5px 0 #e0c27a; cursor: pointer; position: relative; }
+  .bookgrid { display: grid; grid-template-columns: repeat(6, clamp(40px, min(12vw, 11vh), 116px)); gap: clamp(6px, 1.4vh, 14px); justify-content: center; }
+  .stk { aspect-ratio: 1; border-radius: 18px; display: grid; place-items: center; font-size: clamp(24px, min(7vw, 7vh), 62px); background: #fff; box-shadow: 0 5px 0 #e0c27a; cursor: pointer; position: relative; }
   .stk.empty { background: rgba(0,0,0,.08); box-shadow: inset 0 4px 0 rgba(0,0,0,.08); color: rgba(0,0,0,.18); cursor: default; font-size: clamp(22px, 4vh, 40px); }
   .stk.hl { outline-color: #ffb703; }
   .stk.wig { animation: right .6s; }
@@ -503,8 +504,10 @@ function flyEl(html, cls, from, to, dur = 700, onEnd, arc = 120) {
   const T = (x, y, s, r = 0) => `translate(${x}px,${y}px) translate(-50%,-50%) scale(${s}) rotate(${r}deg)`;
   const rot = cls.includes('rocket') ? -45 : 0;
   if (!e.animate) { e.remove(); onEnd && onEnd(); return; }
+  let done = false;
+  const fin = () => { if (done) return; done = true; e.remove(); onEnd && onEnd(); };
   const an = e.animate([{ transform: T(x0, y0, 1, rot) }, { transform: T(mx, my, 1.4, rot), offset: .45 }, { transform: T(x1, y1, .7, rot) }], { duration: dur, easing: 'ease-in-out', fill: 'forwards' });
-  an.onfinish = () => { e.remove(); onEnd && onEnd(); };
+  an.onfinish = fin; setTimeout(fin, dur + 120);   // timer backup in case animation frames are slow
 }
 
 // =====================================================================
@@ -649,7 +652,7 @@ const World = (() => {
     const body = new THREE.Mesh(brickGeo, m); body.scale.set(...slotScale(s)); g.add(body);
     studOffsets(s).forEach(([dx, dz]) => { const st = new THREE.Mesh(studGeo, m); st.position.set(dx, LH / 2 + .09, dz); g.add(st); });
     const v = new THREE.Vector3(sx / innerWidth * 2 - 1, -(sy / innerHeight) * 2 + 1, .5).unproject(camera).sub(camera.position).normalize();
-    const start = camera.position.clone().addScaledVector(v, camera.position.distanceTo(new THREE.Vector3(0, camY, 0)) * .45);
+    const start = camera.position.clone().addScaledVector(v, camera.position.distanceTo(new THREE.Vector3(0, camY, 0)) * .7);
     g.position.copy(start); scene.add(g);
     flights.push({ g, m, i, hex, start, end: slotPos(i), t: 0, dur: 1.0 });
   }
@@ -668,7 +671,7 @@ const World = (() => {
   function focus(m) { mode = m; layout(); }
   function layout() {
     const portrait = H > W;
-    if (mode === 'station') { if (portrait) { tfx = .5; tfy = .11; tDistMul = 2.3; } else { tfx = .84; tfy = .56; tDistMul = 1.05; } }
+    if (mode === 'station') { if (portrait) { tfx = .5; tfy = .13; tDistMul = 2.6; } else { tfx = .8; tfy = .56; tDistMul = 1.2; } }
     else if (mode === 'hub') { tfx = .5; tfy = portrait ? .27 : .36; tDistMul = portrait ? 1.7 : 1.1; }
     else { tfx = .5; tfy = .5; tDistMul = portrait ? 1.6 : 1; }
   }
@@ -688,7 +691,7 @@ const World = (() => {
       const e = Math.min(1, f.t), u = 1 - e;
       const ctrl = f.start.clone().lerp(f.end, .5); ctrl.y = Math.max(f.start.y, f.end.y) + 4;
       f.g.position.set(u * u * f.start.x + 2 * u * e * ctrl.x + e * e * f.end.x, u * u * f.start.y + 2 * u * e * ctrl.y + e * e * f.end.y, u * u * f.start.z + 2 * u * e * ctrl.z + e * e * f.end.z);
-      f.g.rotation.set(u * 5, u * 7, u * 3); f.g.scale.setScalar(1 + u * .6);
+      f.g.rotation.set(u * 5, u * 7, u * 3); f.g.scale.setScalar(1 + u * .25);
       if (f.t >= 1) { flights.splice(k, 1); land(f); }
     }
     roofs.forEach(r => { if (r.visible && r.userData.pop < 1) { r.userData.pop = Math.min(1, r.userData.pop + dt * 2); const p = r.userData.pop; r.scale.setScalar(p < .7 ? p / .7 * 1.2 : 1.2 - (p - .7) / .3 * .2); } });
@@ -902,7 +905,7 @@ const ABC = {
 //  Station 2: Number Mountain (count, more/less, add, take away)
 // =====================================================================
 const NUM = {
-  id: 'num', name: 'Number Mountain', icon: '🔢', pic: '🔢<small>⛰️</small>', color: '#42a5f5', levels: ['🐥', '🔟', '⚖️', '➕', '➕', '➖'],
+  id: 'num', name: 'Number Mountain', icon: '🔢', pic: '🔢<small>⛰️</small>', color: '#42a5f5', levels: ['🐥', '🔟', '🐘', '➕', '➕', '➖'],
   make(L) { if (L <= 2) this.count(L === 1 ? 5 : 10); else if (L === 3) this.compare(); else if (L <= 5) this.add(L === 4 ? 5 : 10); else this.sub(); },
   numChoices(ans, hi) {
     const s = new Set([ans]); const cand = shuffle([ans - 1, ans + 1, ans - 2, ans + 2, ans + 3, ans - 3].filter(v => v >= 1 && v <= hi));
