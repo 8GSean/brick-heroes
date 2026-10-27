@@ -1537,18 +1537,19 @@ function updateTruckVisual(dt) {
 // =====================================================================
 //  Input: gamepad + keyboard + mouse + touch
 // =====================================================================
-const keys = {};
+const keysDown = {}, tapped = {};   // tapped: remembers quick taps between two frames
+const keys = new Proxy(keysDown, { get: (o, k) => !!(o[k] || tapped[k]) });
 let usingPad = false, mouseDX = 0, mouseDY = 0, dragging = false;
 addEventListener('keydown', e => {
-  keys[e.code] = true;
+  keysDown[e.code] = true; tapped[e.code] = true;
   if (['Space', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
   if (e.code === 'KeyM') toggleMute();
   if (e.code === 'Escape') goHome();
   if (usingPad) { usingPad = false; renderControls(); }
   anyInput();
 });
-addEventListener('keyup', e => { keys[e.code] = false; });
-addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+addEventListener('keyup', e => { keysDown[e.code] = false; });
+addEventListener('blur', () => { for (const k in keysDown) keysDown[k] = false; });
 const cvs = renderer.domElement;
 cvs.addEventListener('contextmenu', e => e.preventDefault());
 cvs.addEventListener('mousedown', e => { anyInput(); dragging = true; });
@@ -1627,6 +1628,7 @@ function readInput() {
   if (edge('mute')) toggleMute();
   if (edge('home') && started) goHome();
   prevBtn = btn;
+  for (const k in tapped) delete tapped[k];
 }
 
 // =====================================================================
@@ -1853,10 +1855,10 @@ function loop(now) {
   renderer.render(scene, camera);
 }
 requestAnimationFrame(loop);
-window.__game = { addScore, setSkin, scene, camera, updateRamps, updatePieces, updateCamera, updateTruck, updateStuds, buildRamp, truck, structs, pieces, save, ramps, crane, input, cam, TARGETS, groundPound, targetDone, bigParty, renderer };
+window.__game = { CONFIG, addScore, setSkin, scene, camera, updateRamps, updatePieces, updateCamera, updateTruck, updateStuds, buildRamp, truck, structs, pieces, save, ramps, crane, input, cam, TARGETS, groundPound, targetDone, bigParty, renderer };
 addEventListener('beforeunload', () => { if (saveDirty) persist(); });
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { if (saveDirty) persist(); A.pause(true); for (const k in keys) keys[k] = false; touch.btn = {}; }
+  if (document.hidden) { if (saveDirty) persist(); A.pause(true); for (const k in keysDown) keysDown[k] = false; touch.btn = {}; }
   else { A.pause(false); last = performance.now(); fpsT0 = 0; }
 });
 </script>
