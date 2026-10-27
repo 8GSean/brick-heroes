@@ -1051,10 +1051,10 @@ pGeo.setAttribute('alpha', new THREE.BufferAttribute(pAlpha, 1).setUsage(THREE.D
 pGeo.setAttribute('size', new THREE.BufferAttribute(pSize, 1).setUsage(THREE.DynamicDrawUsage));
 const PU = { uScale: { value: 1 }, uTime: { value: 0 }, uAmt: { value: .6 } };
 const pMat = new THREE.ShaderMaterial({
-  uniforms: PU, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, vertexColors: true,
+  uniforms: PU, transparent: true, depthWrite: false, vertexColors: true,
   vertexShader: `attribute float alpha; attribute float size; uniform float uScale; varying vec3 vC; varying float vA;
     void main(){ vC = color; vA = alpha; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv; gl_PointSize = size * uScale * 300.0 / -mv.z; }`,
-  fragmentShader: `varying vec3 vC; varying float vA; void main(){ float d = length(gl_PointCoord - .5); float a = smoothstep(.5, .1, d); if (a * vA < .01) discard; gl_FragColor = vec4(vC * (1.0 + (1.0 - d * 2.0)), a * vA); }`,
+  fragmentShader: `varying vec3 vC; varying float vA; void main(){ float d = length(gl_PointCoord - .5); float a = smoothstep(.5, .1, d); if (a * vA < .01) discard; gl_FragColor = vec4(mix(vC, vec3(1.0), (1.0 - d * 2.0) * .6), a * vA); }`,
 });
 const pts = new THREE.Points(pGeo, pMat); pts.frustumCulled = false; scene.add(pts);
 let pNext = 0;
@@ -1520,7 +1520,7 @@ function updateFireworks(dt) {
     const r = rockets[i]; r.t -= dt; r.v.y -= 9 * dt; r.p.addScaledVector(r.v, dt);
     emit(r.p.x, r.p.y, r.p.z, rand(-.3, .3), -1, rand(-.3, .3), '#fff3b0', .3, .4, 0);
     if (r.t <= 0) {
-      burst(r.p, [r.c, '#ffffff', r.c], 70, 9, .7, 1.6, 3);
+      burst(r.p, [r.c, '#ffffff', r.c], 70, 8, 1.1, 1.6, 3);
       AU.voice('pop', 0, .25, panFor(r.p)); AU.voice('chime', midiHz(degMidi(84, Math.floor(rand(0, 8)))), .3, panFor(r.p));
       rockets.splice(i, 1);
     }
