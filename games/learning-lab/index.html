@@ -1210,9 +1210,9 @@ function pollPad(dt) {
   try { for (const p of (navigator.getGamepads ? navigator.getGamepads() : [])) if (p && p.connected) { gp = p; break; } } catch (e) {}
   if (!gp) return;
   const now = []; for (let i = 0; i < 17; i++) now[i] = !!(gp.buttons[i] && gp.buttons[i].pressed);
-  const edge = i => now[i] && !pad.prev[i];
-  const prevSnapshot = pad.prev; pad.prev = now;
-  if (!prevSnapshot.length) return;               // first poll: just learn the button state
+  const prev = pad.prev; pad.prev = now;
+  if (!prev.length) return;                       // first poll: just learn the button state
+  const edge = i => now[i] && !prev[i];
   if (edge(9)) return goHome();
   if (!started) { if ([0, 1, 2, 3].some(edge)) { A.init(); startGame(); } return; }
   if (edge(8)) toggleMute();
