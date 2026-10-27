@@ -48,7 +48,17 @@
   .gb::before { left: 5px; } .gb::after { right: 5px; }
   .gb.got { background: linear-gradient(#ffe38a, #ffb703); box-shadow: 0 3px 0 #b77a00, 0 0 12px #ffd54a; opacity: 1; animation: pop .4s; }
 
-  #mute { position: absolute; right: 16px; top: 54px; pointer-events: auto; font-size: 30px; background: rgba(20,30,60,.45); border: 0; border-radius: 50%; width: 50px; height: 50px; cursor: pointer; }
+  #mute, #voice, #lang { position: absolute; right: 16px; top: 54px; pointer-events: auto; font-size: 30px; background: rgba(20,30,60,.45); border: 0; border-radius: 50%; width: 50px; height: 50px; cursor: pointer; padding: 0; line-height: 50px; text-align: center; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; }
+  #voice { right: 72px; font-size: 26px; } #lang { right: 128px; font-size: 26px; }
+  .off { opacity: .5; }
+  #tbtns { position: absolute; right: 14px; top: 14px; display: flex; gap: 12px; direction: ltr; }
+  #tbtns button { width: 62px; height: 62px; border-radius: 50%; border: 3px solid #fff; background: rgba(20,30,60,.5); font-size: 32px; cursor: pointer; padding: 0; box-shadow: 0 4px 0 rgba(0,0,0,.3); font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; }
+  #hesub { display: none; margin-top: min(18px, 2vh); font-family: 'Arial Black', Arial, system-ui, sans-serif; font-weight: 900; font-size: clamp(26px, min(6vw, 9vh), 64px); color: #ffd23f; -webkit-text-stroke: 2px #c8102e; text-shadow: 0 5px 0 #7a0a1c; direction: rtl; }
+  html[lang="he"] #hesub { display: block; }
+  /* RTL: keep the HUD layout as-is, only text flips */
+  #hud, #title .press, #controls, #heroes, #studbox { direction: ltr; }
+  .txt { unicode-bidi: plaintext; }
+  html[lang="he"] .txt { font-family: 'Arial Black', Arial, system-ui, sans-serif; font-weight: 900; }
 
   #heroes { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); display: flex; gap: 14px; align-items: flex-end; }
   .hero { width: 64px; height: 64px; border-radius: 50%; border: 4px solid #fff; overflow: hidden; background: #333; box-shadow: 0 4px 0 rgba(0,0,0,.35); transition: transform .2s; position: relative; }
@@ -94,6 +104,9 @@
   body.touch #meterwrap { left: calc(var(--sl) + 82px); top: calc(var(--st) + 66px); }
   body.touch #goldrow { right: calc(var(--sr) + 16px); top: calc(var(--st) + 16px); }
   body.touch #mute { right: calc(var(--sr) + 16px); top: calc(var(--st) + 54px); }
+  body.touch #voice { right: calc(var(--sr) + 72px); top: calc(var(--st) + 54px); }
+  body.touch #lang { right: calc(var(--sr) + 128px); top: calc(var(--st) + 54px); }
+  body.touch #tbtns { right: calc(var(--sr) + 14px); top: calc(var(--st) + 14px); }
   @media (orientation: portrait) {
     body.touch #studnum { font-size: 34px; } body.touch .stud-ico { width: 36px; height: 36px; } body.touch .stud-ico::after { inset: 9px; }
     body.touch #meterwrap { top: calc(var(--st) + 54px); } body.touch #meter { width: 150px; height: 18px; }
@@ -103,6 +116,8 @@
     body.touch #heroes .hero { width: 42px; height: 42px; }
     body.touch #fs.can { top: calc(var(--st) + 10px); right: calc(var(--sr) + 74px); }
     body.touch #mute { top: calc(var(--st) + 10px); }
+    body.touch #voice { top: calc(var(--st) + 66px); right: calc(var(--sr) + 16px); }
+    body.touch #lang { top: calc(var(--st) + 66px); right: calc(var(--sr) + 72px); }
     body.touch #bossbar { top: calc(var(--st) + 190px); } body.touch #bossbar .bar { width: 180px; }
     #stickzone { width: 55%; top: 45%; }
   }
@@ -155,6 +170,8 @@
   <div id="meterwrap"><div id="meter"><div id="meterfill"></div></div><div id="meterstar">⭐</div></div>
   <div id="goldrow"></div>
   <button id="mute" title="Sound">🔊</button>
+  <button id="voice" title="Voice">🗣️</button>
+  <button id="lang" title="Language">🇬🇧</button>
   <div id="bossbar"><div class="ico">🤖</div><div class="bar"><div id="bossfill"></div></div></div>
   <div id="heroes"></div>
   <div id="controls"></div>
@@ -174,11 +191,13 @@
 
 <div id="title">
   <h1>BRICK<br>HEROES</h1>
-  <div class="sub">⭐ Mission 1 ⭐</div>
+  <div id="hesub">גיבורי הלבנים</div>
+  <div class="sub txt" id="mission">⭐ Mission 1 ⭐</div>
   <div class="press"><div class="bigA">A</div><div class="bigIco kbd">⌨️</div><div class="bigIco kbd">🖱️</div><div class="bigIco tap" style="display:none">👆</div></div>
   <div id="rotate">📱</div>
-  <div id="tiphint"><b>⬆️</b> Share → <b>➕</b> Add to Home Screen for full screen play</div>
-  <button id="reset">Reset progress</button>
+  <div id="tiphint" class="txt"><b>⬆️</b> Share → <b>➕</b> Add to Home Screen for full screen play</div>
+  <button id="reset" class="txt">Reset progress</button>
+  <div id="tbtns"><button id="tvoice" title="Voice">🗣️</button><button id="tlang" title="Language">🇬🇧</button></div>
 </div>
 
 <script type="importmap">
@@ -211,6 +230,111 @@ const colorCache = {};
 const col = hex => colorCache[hex] || (colorCache[hex] = new THREE.Color(hex));
 
 // =====================================================================
+//  Words: every text the game shows or says lives here.
+//  Want another language? Copy the `en` block, give it a new name (like `fr`),
+//  translate the words, and add its flag to LANG_ORDER.
+// =====================================================================
+const STRINGS = {
+  en: {
+    flag: '🇬🇧', speech: 'en-US', dir: 'ltr',
+    mission: '⭐ Mission 1 ⭐', reset: 'Reset progress', resetAsk: 'Start over? All studs and gold bricks will be reset.',
+    tip: '<b>⬆️</b> Share → <b>➕</b> Add to Home Screen for full screen play',
+    home: 'Back to the arcade', sound: 'Sound on / off', voice: 'Talking on / off', lang: 'Language: English', fullscreen: 'Full screen',
+    say: {
+      hello: 'Hello! Now we speak English!', voiceOn: 'I will talk to you!',
+      start: ["Let's go, hero!", "Let's go, hero! Time to build!"],
+      holdKey: 'Hold B to build!', holdPad: 'Hold the B button to build!', holdTouch: 'Hold the hammer button to build!',
+      built: ['You built it!', 'Wow, look what you built!'],
+      bTramp: 'A trampoline! Jump on it to bounce up high!',
+      bFountain: 'A fountain! It sprays studs!',
+      bStatue: 'A golden hero statue! Look, a gold brick!',
+      bRocket: 'A rocket! Stand on it to blast off!',
+      countdown: 'Three, two, one, blast off!',
+      bBalloon: 'A hot air balloon! Walk into the basket to fly!',
+      bMerry: 'A merry-go-round! Hop on for a ride!',
+      bPizza: 'A pizza stand! Catch the flying pizzas!',
+      bRobot: 'A dancing robot! Step on the dance floor!',
+      dance: 'Dance party!',
+      bPiano: 'A giant piano! Jump on the keys to make music!',
+      music: 'Beautiful music!',
+      bSlide: 'Stairs to the roof! Climb up, then slide down!',
+      bKart: 'A race car! Walk into it to drive!',
+      kartIn: 'Vroom vroom! Jump to get out.',
+      bCannon: 'A hero cannon! Step in to fly to the roof!',
+      gold: ['A gold brick! Amazing!', 'Gold brick! You did it!'],
+      goldAppear: 'A gold brick appeared! Grab it!',
+      allGold: 'You found all the gold bricks! You are a super hero!',
+      newHero: 'A new hero joined the team!',
+      boss: 'Uh oh, the big Brick Bot! Punch it!',
+      bossWin: 'You beat the Brick Bot! Hooray!',
+      hintGold: 'Follow the yellow arrow to find gold!',
+      hintBuild: 'Look for a brick pile with a hammer, and build something!',
+      hintSmash: 'Smash things to collect studs!',
+      hintHero: 'Try a different hero!',
+      hintPad: 'Jump on the bouncy pads!',
+    },
+  },
+  he: {
+    flag: '🇮🇱', speech: 'he-IL', dir: 'rtl',
+    mission: '⭐ משימה 1 ⭐', reset: 'להתחיל מחדש', resetAsk: 'להתחיל מההתחלה? כל המטבעות ולבני הזהב יימחקו.',
+    tip: '<b>⬆️</b> שיתוף ← <b>➕</b> הוספה למסך הבית, למשחק במסך מלא',
+    home: 'חזרה לארקייד', sound: 'צלילים', voice: 'קריינות', lang: 'שפה: עברית', fullscreen: 'מסך מלא',
+    say: {
+      hello: 'שלום! עכשיו מדברים עברית!', voiceOn: 'אני אדבר איתכם!',
+      start: ['קדימה, גיבור! יוצאים לדרך!', 'קדימה, גיבור! בואו נבנה!'],
+      holdKey: 'החזיקו את B כדי לבנות!', holdPad: 'החזיקו את כפתור B כדי לבנות!', holdTouch: 'החזיקו את כפתור הפטיש כדי לבנות!',
+      built: ['בניתם את זה!', 'וואו, תראו מה בניתם!'],
+      bTramp: 'טרמפולינה! קפצו עליה כדי לעוף גבוה!',
+      bFountain: 'מזרקה! היא מתיזה מטבעות!',
+      bStatue: 'פסל גיבור מזהב! תראו, לבנת זהב!',
+      bRocket: 'טיל! עמדו עליו כדי לטוס לשמיים!',
+      countdown: 'שלוש, שתיים, אחת, המראה!',
+      bBalloon: 'כדור פורח! היכנסו לסל כדי לעוף!',
+      bMerry: 'קרוסלה! עלו עליה לסיבוב!',
+      bPizza: 'דוכן פיצה! תפסו את הפיצות המעופפות!',
+      bRobot: 'רובוט רוקד! עלו על רחבת הריקודים!',
+      dance: 'מסיבת ריקודים!',
+      bPiano: 'פסנתר ענק! קפצו על הקלידים כדי לנגן!',
+      music: 'איזו מנגינה יפה!',
+      bSlide: 'מדרגות לגג! טפסו למעלה וגלשו למטה!',
+      bKart: 'מכונית מרוץ! היכנסו אליה כדי לנהוג!',
+      kartIn: 'ברום ברום! קפצו כדי לצאת.',
+      bCannon: 'תותח גיבורים! היכנסו פנימה כדי לעוף לגג!',
+      gold: ['לבנת זהב! מדהים!', 'לבנת זהב! הצלחתם!'],
+      goldAppear: 'הופיעה לבנת זהב! תפסו אותה!',
+      allGold: 'מצאתם את כל לבני הזהב! אתם גיבורי־על!',
+      newHero: 'גיבור חדש הצטרף לצוות!',
+      boss: 'אוי, רובוט הלבנים הגדול! תנו לו אגרוף!',
+      bossWin: 'ניצחתם את רובוט הלבנים! הידד!',
+      hintGold: 'עקבו אחרי החץ הצהוב כדי למצוא זהב!',
+      hintBuild: 'חפשו ערימת לבנים עם פטיש, ובנו משהו!',
+      hintSmash: 'שברו דברים כדי לאסוף מטבעות!',
+      hintHero: 'נסו גיבור אחר!',
+      hintPad: 'קפצו על המשטחים הקופצניים!',
+    },
+  },
+};
+const LANG_ORDER = ['en', 'he'];
+// settings (not wiped by "Reset progress")
+const SETTINGS_KEY = 'brick-arcade-brick-heroes-settings';
+const settings = { voice: true, lang: /^he|^iw/i.test(navigator.language || '') ? 'he' : 'en' };
+try { const s = JSON.parse(localStorage.getItem(SETTINGS_KEY)); if (s) Object.assign(settings, s); } catch (e) {}
+if (!STRINGS[settings.lang]) settings.lang = 'en';
+function saveSettings() { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) {} }
+const T = key => STRINGS[settings.lang][key] ?? STRINGS.en[key];
+function applyLang() {
+  const L = STRINGS[settings.lang];
+  document.documentElement.lang = settings.lang; document.documentElement.dir = L.dir;
+  $('mission').textContent = L.mission; $('reset').textContent = L.reset; $('tiphint').innerHTML = L.tip;
+  for (const el of document.querySelectorAll('.txt')) el.dir = L.dir;
+  $('home').title = L.home; $('home').setAttribute('aria-label', L.home);
+  $('mute').title = L.sound; $('fs').title = L.fullscreen;
+  for (const id of ['voice', 'tvoice']) { $(id).title = L.voice; $(id).textContent = settings.voice ? '🗣️' : '🤫'; $(id).classList.toggle('off', !settings.voice); }
+  for (const id of ['lang', 'tlang']) { $(id).title = L.lang; $(id).textContent = L.flag; }
+}
+applyLang();
+
+// =====================================================================
 //  Save data
 // =====================================================================
 const SAVE_KEY = 'brick-heroes-v1';
@@ -220,7 +344,7 @@ let saveDirty = false;
 function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} saveDirty = false; }
 $('reset').addEventListener('click', e => {
   e.stopPropagation();
-  if (confirm('Start over? All studs and gold bricks will be reset.')) { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} location.reload(); }
+  if (confirm(T('resetAsk'))) { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} location.reload(); }
 });
 
 // =====================================================================
@@ -315,7 +439,76 @@ const SFX = {
   stomp() { A.noise(0.6, 0.5, 400); A.tone(60, 0.5, 'sine', 0.4, 25); },
   jet() { A.noise(0.09, 0.04, 900); },
   robot() { A.tone(140, 0.2, 'sawtooth', 0.04, 90); },
+  firework() { A.noise(0.6, 0.3, 2500); for (let i = 0; i < 8; i++) A.tone(rand(1200, 2600), 0.05, 'square', 0.03, 0, 0.05 + i * 0.05); },
+  whoosh() { A.noise(0.5, 0.2, 1200, 0, 'bandpass'); A.tone(700, 0.5, 'sine', 0.08, 200); },
+  honk() { A.tone(392, 0.18, 'square', 0.1); A.tone(330, 0.25, 'square', 0.1, 0, 0.2); },
+  note(f) { A.tone(f, 0.8, 'triangle', 0.22); A.tone(f * 2, 0.5, 'sine', 0.07); },
+  yum() { A.tone(500, 0.1, 'sine', 0.15, 800); A.tone(800, 0.15, 'sine', 0.12, 1200, 0.1); },
+  beep(hi) { A.tone(hi ? 1320 : 880, 0.15, 'square', 0.08); },
+  boom() { A.noise(0.8, 0.5, 900); A.tone(70, 0.6, 'sine', 0.4, 30); },
+  engine(sp) { A.tone(60 + sp * 5, 0.13, 'sawtooth', 0.025, 60 + sp * 6); },
+  kick() { A.tone(120, 0.15, 'sine', 0.3, 40); A.noise(0.04, 0.06, 8000, 0, 'highpass'); },
+  hat() { A.noise(0.04, 0.07, 8000, 0, 'highpass'); },
+  chime(i) { const f = [523, 587, 659, 784, 880, 1047, 880, 784][i % 8]; A.tone(f, 0.3, 'triangle', 0.08); A.tone(f * 2, 0.2, 'sine', 0.03); },
 };
+
+// =====================================================================
+//  Narration: a friendly voice (speechSynthesis). Never waits, never throws.
+//  say(key) picks the line from STRINGS[lang].say[key].
+// =====================================================================
+const NARRATE = { gap: 3.5, hintEvery: 45 };   // seconds between normal lines / between gentle hints
+const sayLog = [];                              // what was said (handy for testing)
+let lastSayT = -99;
+const sayCool = {};
+let voiceList = [];
+function loadVoices() { try { voiceList = speechSynthesis.getVoices() || []; } catch (e) { voiceList = []; } }
+try { loadVoices(); speechSynthesis.addEventListener?.('voiceschanged', loadVoices); } catch (e) {}
+function pickVoice(code) {
+  const two = code.slice(0, 2).toLowerCase(), alt = two === 'he' ? 'iw' : two;
+  const ok = v => { const l = (v.lang || '').toLowerCase().replace('_', '-'); return l.startsWith(two) || l.startsWith(alt); };
+  const list = voiceList.filter(ok);
+  return list.find(v => (v.lang || '').replace('_', '-') === code && /google|natural|samantha|carmit/i.test(v.name)) || list.find(v => (v.lang || '').replace('_', '-') === code) || list[0] || null;
+}
+// prio 0 = hint, 1 = normal, 2 = important (interrupts), cool = seconds before this same line may repeat
+function say(key, { prio = 1, cool = 8 } = {}) {
+  if (!settings.voice || A.muted) return;
+  const now = performance.now() / 1000;
+  if (now - (sayCool[key] ?? -1e9) < cool) return;
+  let line = STRINGS[settings.lang].say[key] ?? STRINGS.en.say[key];
+  if (!line) return;
+  if (Array.isArray(line)) line = line[Math.floor(Math.random() * line.length)];
+  try {
+    const ss = window.speechSynthesis; if (!ss) return;
+    if (prio < 2 && (now - lastSayT < NARRATE.gap || ss.speaking)) return;
+    if (prio >= 2) ss.cancel();
+    const u = new SpeechSynthesisUtterance(line), code = STRINGS[settings.lang].speech;
+    u.lang = code; const v = pickVoice(code); if (v) u.voice = v;
+    u.rate = 1; u.pitch = 1.15; u.volume = 1;
+    ss.speak(u);
+  } catch (e) { return; }
+  sayCool[key] = now; lastSayT = now;
+  sayLog.push(line); if (sayLog.length > 40) sayLog.shift();
+}
+function hushVoice() { try { window.speechSynthesis?.cancel(); } catch (e) {} }
+function toggleVoice() {
+  settings.voice = !settings.voice; saveSettings(); applyLang();
+  if (settings.voice) say('voiceOn', { prio: 2, cool: 0 }); else hushVoice();
+}
+function toggleLang() {
+  settings.lang = LANG_ORDER[(LANG_ORDER.indexOf(settings.lang) + 1) % LANG_ORDER.length]; saveSettings(); applyLang();
+  say('hello', { prio: 2, cool: 0 });
+}
+let hintT = 0;
+function maybeHint() {
+  const now = performance.now() / 1000;
+  if (!started || time < 25 || now - lastSayT < NARRATE.hintEvery || now - hintT < NARRATE.hintEvery) return;
+  hintT = now;
+  const opts = ['hintSmash', 'hintPad'];
+  if (goldBricks.length) opts.push('hintGold', 'hintGold');
+  if (buildables.some(b => !b.built)) opts.push('hintBuild', 'hintBuild');
+  if (save.heroes.length > 1) opts.push('hintHero');
+  say(opts[Math.floor(Math.random() * opts.length)], { prio: 0, cool: 90 });
+}
 
 // =====================================================================
 //  Renderer / scene
@@ -686,6 +879,8 @@ function poseFig(f, s) {
   if (s.air) { lL = -0.7; lR = 0.35; aL = -2.5; aR = -0.4; aLz = -0.5; aRz = 0.5; }
   if (s.fly) { lL = 0.15; lR = 0.25; aL = 0.4; aR = 0.4; bx = 0.6; aLz = -0.3; aRz = 0.3; }
   if (s.build) { aL = -1.4 + Math.sin(s.t * 28) * 0.7; aR = -1.4 - Math.sin(s.t * 28) * 0.7; lL = lR = Math.sin(s.t * 14) * 0.15; }
+  if (s.sit) { lL = lR = -1.5; aL = aR = -0.9; aLz = -0.15; aRz = 0.15; }
+  if (s.cheer) { aL = -2.9 + Math.sin(s.t * 9) * 0.35; aR = -2.9 - Math.sin(s.t * 9) * 0.35; aLz = -0.3; aRz = 0.3; }
   if (s.dance) { aL = -2.8 + Math.sin(s.t * 10) * 0.4; aR = -2.8 - Math.sin(s.t * 10) * 0.4; by = Math.sin(s.t * 5) * 0.5; }
   if (s.attack > 0) { const k = Math.sin(s.attack * Math.PI); if (s.arm) aR = lerp(aR, -1.8, k); else aL = lerp(aL, -1.8, k); by = (s.arm ? -0.5 : 0.5) * k; }
   if (s.power > 0) { const k = Math.min(1, s.power * 4); aL = lerp(aL, -1.57, k); aR = lerp(aR, -1.57, k); }
@@ -794,6 +989,18 @@ function arrowCanvas(color = '#ffd23f') {
 const ARROW_CANVAS = arrowCanvas();
 
 // =====================================================================
+//  Multiplayer hooks
+//  Every buildable / smashable / goon has a stable `id` (its index in creation order,
+//  everything is created in a fixed order by buildWorld with a seeded random).
+//  Gold bricks use stable string ids ('tower', 'boss', ...).
+//  The three world events all go through ONE function each:
+//    completeBuild(b, remote)   smashTarget(t, dir, remote)   collectGold(g, remote)
+//  Local events call NET.send(type, data); a network layer can replace NET.send and call
+//  the same functions with remote = true for events that came from another player.
+// =====================================================================
+const NET = { send(type, data) {} };   // type: 'build' {id} | 'smash' {kind, id} | 'gold' {id}
+
+// =====================================================================
 //  Targets: smashables, goons, boss
 // =====================================================================
 const targets = [];
@@ -865,7 +1072,7 @@ function addSmash(type, x, z, y = 0, rotY = 0) {
   const def = SMASH[type], g = new THREE.Group(); def.build(g); g.position.set(x, y, z); g.rotation.y = rotY; scene.add(g);
   const colors = [];
   g.traverse(o => { if (o.isMesh) { const h = '#' + o.material.color.getHexString(); if (!colors.includes(h)) colors.push(h); } });
-  const s = { type, def, g, pos: new V3(x, y, z), hp: def.hp, radius: def.r, block: def.block !== false, alive: true, respawn: 0, wob: 0, pop: 1, hitHeight: def.hh || 0.8, h: def.h, cool: 0, colors, tough: !!def.tough };
+  const s = { kind: 'prop', id: smashables.length, type, def, g, pos: new V3(x, y, z), hp: def.hp, radius: def.r, block: def.block !== false, alive: true, respawn: 0, wob: 0, pop: 1, hitHeight: def.hh || 0.8, h: def.h, cool: 0, colors, tough: !!def.tough };
   s.hit = (dmg, dir) => smashHit(s, dmg, dir);
   smashables.push(s); targets.push(s); return s;
 }
@@ -879,13 +1086,25 @@ function smashHit(s, dmg) {
     return;
   }
   s.hp -= dmg; SFX.hit(); sparkle(c, '#ffffff', 6, 5);
-  if (s.hp <= 0) {
-    s.alive = false; s.g.visible = false; s.respawn = s.def.respawn ?? 25;
-    debris(c, s.colors, s.def.pieces || 10, s.def.size || 1); burstStuds(c, s.def.studs); smoke(c, 6, .6);
-    SFX.smash(); shake(0.12 * (s.def.size || 1)); rumble(0.35, 0.3, 100);
-    s.def.onBreak?.(s);
-  }
+  if (s.hp <= 0) smashTarget(s);
 }
+function breakProp(s) {
+  const c = new V3(s.pos.x, s.pos.y + s.hitHeight, s.pos.z);
+  s.alive = false; s.g.visible = false; s.respawn = s.def.respawn ?? 25;
+  debris(c, s.colors, s.def.pieces || 10, s.def.size || 1); burstStuds(c, s.def.studs); smoke(c, 6, .6);
+  SFX.smash(); shake(0.12 * (s.def.size || 1)); rumble(0.35, 0.3, 100);
+  s.def.onBreak?.(s);
+}
+// THE place where any target (prop, goon or boss) gets smashed. remote = it happened for another player.
+function smashTarget(t, dir, remote = false) {
+  if (!t || !t.alive) return;
+  t.hp = 0;
+  if (t.kind === 'prop') breakProp(t);
+  else if (t.kind === 'goon') defeatGoon(t, dir, remote);
+  else if (t.kind === 'boss') defeatBoss();
+  if (!remote) NET.send('smash', { kind: t.kind, id: t.id });
+}
+function findTarget(kind, id) { return kind === 'prop' ? smashables[id] : kind === 'goon' ? goons[id] : kind === 'boss' ? boss : null; }
 function updateSmashables(dt) {
   for (const s of smashables) {
     s.cool -= dt;
@@ -910,13 +1129,16 @@ function blockBySmashables(p, r) {
 const goons = [];
 function addGoon(x, z) {
   const fig = makeMinifig(GOON_DEF); fig.position.set(x, 0, z); scene.add(fig);
-  const g = { fig, home: new V3(x, 0, z), pos: new V3(x, 0, z), vel: new V3(), yaw: srng() * TAU, alive: true, hp: 1, radius: .8, hitHeight: 1.2, target: new V3(x, 0, z), timer: 0, respawn: 0, slapT: 1, slapAnim: 0, phase: 0, pop: 1, isGoon: true };
+  const g = { kind: 'goon', id: goons.length, fig, home: new V3(x, 0, z), pos: new V3(x, 0, z), vel: new V3(), yaw: srng() * TAU, alive: true, hp: 1, radius: .8, hitHeight: 1.2, target: new V3(x, 0, z), timer: 0, respawn: 0, slapT: 1, slapAnim: 0, phase: 0, pop: 1, isGoon: true };
   g.hit = (dmg, dir) => goonHit(g, dmg, dir);
   goons.push(g); targets.push(g);
 }
 function goonHit(g, dmg, dir) {
   if (!g.alive) return;
   g.hp -= dmg; if (g.hp > 0) return;
+  smashTarget(g, dir);
+}
+function defeatGoon(g, dir, remote) {
   g.alive = false; g.fig.visible = false; g.respawn = 12;
   const c = new V3(g.pos.x, g.pos.y + 1.2, g.pos.z);
   fx(litFX, c.x, c.y + 1, c.z, { vx: (dir?.x || 0) * 6, vy: 12, vz: (dir?.z || 0) * 6, sx: .6, sy: .5, sz: .6, color: '#2b2d42', life: 2, bounce: true, grav: -30, spin: 12 });
@@ -924,6 +1146,7 @@ function goonHit(g, dmg, dir) {
   for (let i = 0; i < 2; i++) fx(litFX, c.x, c.y - .6, c.z, { vx: rand(-4, 4), vy: 8, vz: rand(-4, 4), sx: .4, sy: .8, sz: .46, color: '#2b2d42', life: 2, bounce: true, grav: -30, spin: 8 });
   debris(c, ['#ff8c1a', '#6a1b9a', '#555b6e'], 6, .6); sparkle(c, '#ff8c1a', 10, 6);
   burstStuds(c, [6, 1, 0, 0]); SFX.smash(); rumble(0.3, 0.3, 90);
+  if (remote) return;
   save.goons++; saveDirty = true;
   if (save.goons >= 15) spawnGoldNearPlayer('goons');
 }
@@ -942,7 +1165,7 @@ function updateGoons(dt) {
       if (dist > 1.9) { tx = dx / dist; tz = dz / dist; speed = 4.5; }
       g.yaw = angLerp(g.yaw, Math.atan2(dx, dz), 1 - Math.exp(-8 * dt));
       g.slapT -= dt;
-      if (dist < 2.3 && g.slapT <= 0 && !player.building) {
+      if (dist < 2.3 && g.slapT <= 0 && !player.building && !player.ride) {
         g.slapT = 1.7; g.slapAnim = 0.3;
         player.vel.x += dx / dist * 8; player.vel.z += dz / dist * 8;
         if (player.onGround) { player.vel.y = 6; player.onGround = false; }
@@ -965,7 +1188,7 @@ function updateGoons(dt) {
 }
 
 // ---------- boss: the Brick Bot ----------
-const boss = { pos: new V3(0, 0, -78), center: new V3(0, 0, -78), alive: true, hp: 16, maxHp: 16, radius: 2.8, hitHeight: 4, big: true, angle: 0, yaw: 0, stompT: 3, stompAnim: 0, stomped: false, flash: 0, respawn: 0, phase: 0, pop: 1 };
+const boss = { kind: 'boss', id: 0, pos: new V3(0, 0, -78), center: new V3(0, 0, -78), alive: true, hp: 16, maxHp: 16, radius: 2.8, hitHeight: 4, big: true, angle: 0, yaw: 0, stompT: 3, stompAnim: 0, stomped: false, flash: 0, respawn: 0, phase: 0, pop: 1 };
 function makeBoss() {
   const g = new THREE.Group();
   const matBody = new THREE.MeshStandardMaterial({ color: '#7d8597', roughness: .35, metalness: .2, emissive: '#ffffff', emissiveIntensity: 0 });
@@ -992,13 +1215,16 @@ boss.hit = (dmg) => {
   boss.hp -= dmg; boss.flash = 0.15; SFX.hit(); SFX.robot();
   const c = new V3(boss.pos.x, 4, boss.pos.z);
   debris(c, ['#7d8597', '#33415c', '#9d4edd'], 3, 1); burstStuds(c, [2, 0, 0, 0]); shake(0.1);
-  if (boss.hp <= 0) {
-    boss.alive = false; bossMesh.g.visible = false; boss.respawn = 45;
-    debris(c, ['#7d8597', '#33415c', '#9d4edd', '#ff8c1a', '#ff2d55'], 40, 1.8); smoke(c, 20, 1.5); confetti(c, 60, 1.2);
-    burstStuds(c, [30, 15, 4, 1], 1.4); SFX.bigsmash(); shake(0.8); rumble(1, 1, 500);
-    placeGold('boss', boss.center.x, 1.4, boss.center.z, true);
-  }
+  if (boss.hp <= 0) smashTarget(boss);
 };
+function defeatBoss() {
+  const c = new V3(boss.pos.x, 4, boss.pos.z);
+  boss.alive = false; bossMesh.g.visible = false; boss.respawn = 45;
+  debris(c, ['#7d8597', '#33415c', '#9d4edd', '#ff8c1a', '#ff2d55'], 40, 1.8); smoke(c, 20, 1.5); confetti(c, 60, 1.2);
+  burstStuds(c, [30, 15, 4, 1], 1.4); SFX.bigsmash(); shake(0.8); rumble(1, 1, 500);
+  say('bossWin', { prio: 2, cool: 20 });
+  placeGold('boss', boss.center.x, 1.4, boss.center.z, true);
+}
 function updateBoss(dt) {
   const B = bossMesh, p = player.pos;
   if (!boss.alive) {
@@ -1063,7 +1289,7 @@ function placeGold(id, x, y, z, fromEvent) {
   if (save.gold.includes(id) || goldBricks.some(b => b.id === id)) return;
   const m = makeGoldMesh(); m.position.set(x, y, z); scene.add(m);
   goldBricks.push({ id, mesh: m, pos: new V3(x, y, z), rise: fromEvent ? 0 : 1 });
-  if (fromEvent) { SFX.pop(); confetti(new V3(x, y, z), 30); sparkle(new V3(x, y, z), '#ffe066', 20, 8, .25); }
+  if (fromEvent) { SFX.pop(); confetti(new V3(x, y, z), 30); sparkle(new V3(x, y, z), '#ffe066', 20, 8, .25); say('goldAppear', { cool: 5 }); }
 }
 function spawnGoldNearPlayer(id) {
   if (save.gold.includes(id) || goldBricks.some(b => b.id === id)) return;
@@ -1073,6 +1299,22 @@ function spawnGoldNearPlayer(id) {
   placeGold(id, x, y, z, true);
 }
 let allGoldParty = 0;
+// THE place where a gold brick gets collected. g = a gold brick object or its id string.
+function collectGold(g, remote = false) {
+  const id = typeof g === 'string' ? g : g.id;
+  const i = goldBricks.findIndex(b => b.id === id), b = goldBricks[i];
+  if (b) { scene.remove(b.mesh); goldBricks.splice(i, 1); }
+  if (save.gold.includes(id)) return;
+  save.gold.push(id); persist();
+  const at = b ? b.mesh.position.clone() : new V3(player.pos.x, player.pos.y + 2, player.pos.z);
+  SFX.gold(); confetti(at, 70, 1.2); sparkle(at, '#ffe066', 30, 10, .3); rumble(.6, .6, 300); shake(.15);
+  if (!remote) player.dance = 1.6;
+  const gp = $('goldpop'); gp.classList.remove('show'); void gp.offsetWidth; gp.classList.add('show');
+  refreshGoldHUD();
+  if (save.gold.length >= GOLD_TOTAL) { allGoldParty = 10; const t = $('trophy'); t.classList.remove('show'); void t.offsetWidth; t.classList.add('show'); say('allGold', { prio: 2, cool: 0 }); }
+  else say('gold', { prio: 2, cool: 0 });
+  if (!remote) NET.send('gold', { id });
+}
 function updateGold(dt) {
   const p = player.pos, H = hero();
   for (let i = goldBricks.length - 1; i >= 0; i--) {
@@ -1083,15 +1325,7 @@ function updateGold(dt) {
     b.mesh.scale.setScalar(0.2 + 0.8 * b.rise);
     if (Math.random() < dt * 8) sparkle(b.mesh.position, '#fff2a0', 1, 2, .15);
     const dx = b.mesh.position.x - p.x, dy = b.mesh.position.y - (p.y + 1.2 * H.scale), dz = b.mesh.position.z - p.z;
-    if (b.rise >= 1 && dx * dx + dy * dy + dz * dz < Math.pow(1.8 + .4 * H.scale, 2)) {
-      scene.remove(b.mesh); goldBricks.splice(i, 1);
-      save.gold.push(b.id); persist();
-      SFX.gold(); confetti(b.mesh.position, 70, 1.2); sparkle(b.mesh.position, '#ffe066', 30, 10, .3); rumble(.6, .6, 300); shake(.15);
-      player.dance = 1.6;
-      const gp = $('goldpop'); gp.classList.remove('show'); void gp.offsetWidth; gp.classList.add('show');
-      refreshGoldHUD();
-      if (save.gold.length >= GOLD_TOTAL) { allGoldParty = 10; const t = $('trophy'); t.classList.remove('show'); void t.offsetWidth; t.classList.add('show'); }
-    }
+    if (b.rise >= 1 && dx * dx + dy * dy + dz * dz < Math.pow(1.8 + .4 * H.scale, 2)) collectGold(b);
   }
   if (allGoldParty > 0) {
     allGoldParty -= dt;
@@ -1118,7 +1352,7 @@ function updateTokens(dt) {
       scene.remove(t.mesh); tokens.splice(i, 1);
       save.heroes.push(t.hero); persist();
       SFX.token(); confetti(t.mesh.position, 50); rumble(.5, .5, 200);
-      swapHero(t.hero, true);
+      swapHero(t.hero, true); say('newHero', { prio: 2, cool: 0 });
     }
   }
 }
@@ -1140,7 +1374,7 @@ function updatePads(dt) {
     pad.squash = Math.max(0, pad.squash - dt * 4);
     if (pad.top) pad.top.scale.y = .25 * (1 - pad.squash * .6);
     if (pad.arrow) { pad.arrow.position.y = 2.2 + Math.sin(time * 5) * .3; }
-    if (Math.hypot(p.x - pad.x, p.z - pad.z) < pad.r && p.y <= pad.y + 0.35 && p.y > pad.y - 1.5 && player.vel.y <= 0.1) {
+    if (!player.ride && Math.hypot(p.x - pad.x, p.z - pad.z) < pad.r && p.y <= pad.y + 0.35 && p.y > pad.y - 1.5 && player.vel.y <= 0.1) {
       player.vel.y = pad.power; player.onGround = false; player.jumps = 1; player.pounding = false; player.airT = 0;
       pad.squash = 1; SFX.boing(); ring(new V3(pad.x, pad.y, pad.z), 3, '#ffffff', .4); sparkle(new V3(pad.x, pad.y + .5, pad.z), '#ffe066', 12, 6); rumble(.3, .2, 100);
     }
