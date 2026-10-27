@@ -357,7 +357,7 @@ let pixelCap = 1.5;
 renderer.setPixelRatio(Math.min(devicePixelRatio, pixelCap));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 document.body.prepend(renderer.domElement);
 
@@ -505,7 +505,7 @@ function buildTerrain() {
     colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
   }
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3)); geo.computeVertexNormals();
-  const t = studTex('#ffffff', '#f3f3f3'); t.repeat.set(EXT * 2 / 1.6, EXT * 2 / 1.6); t.anisotropy = 2;
+  const t = studTex('#ffffff', '#f3f3f3'); t.repeat.set(EXT * 2 / 1.6, EXT * 2 / 1.6); t.anisotropy = 4;
   const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: t, vertexColors: true, roughness: 0.85 }));
   m.receiveShadow = true; scene.add(m);
   // mud puddles
@@ -1853,7 +1853,7 @@ function loop(now) {
   renderer.render(scene, camera);
 }
 requestAnimationFrame(loop);
-window.__game = { scene, camera, updateRamps, updatePieces, updateCamera, updateTruck, updateStuds, buildRamp, truck, structs, pieces, save, ramps, crane, input, cam, TARGETS, groundPound, targetDone, bigParty, renderer };
+window.__game = { addScore, setSkin, scene, camera, updateRamps, updatePieces, updateCamera, updateTruck, updateStuds, buildRamp, truck, structs, pieces, save, ramps, crane, input, cam, TARGETS, groundPound, targetDone, bigParty, renderer };
 addEventListener('beforeunload', () => { if (saveDirty) persist(); });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { if (saveDirty) persist(); A.pause(true); for (const k in keys) keys[k] = false; touch.btn = {}; }

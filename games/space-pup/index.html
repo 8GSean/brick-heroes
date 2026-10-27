@@ -1420,7 +1420,7 @@ function land() {
   const newPlanet = bodies[P.body].planet;
   // face something useful: the alien if we just arrived on a planet
   if (F.isTrip) { tangentOf(aliens[newPlanet].pos.clone().sub(P.pos), P.up, P.fwd).applyAxisAngle(P.up, 0.55); cam.fwd.copy(P.fwd); }
-  else tangentOf(P.fwd, P.up, P.fwd);
+  else { if (findGoal()) tangentOf(goalPos.clone().sub(P.pos), P.up, P.fwd); else tangentOf(P.fwd, P.up, P.fwd); cam.fwd.copy(P.fwd); }
   P.squash = 0.45; P.squashV = 0; P.padCool = 0.8;
   SFX.land(); burst(P.pos, 18, 4, ['#ffffff', PLANETS[newPlanet].c1], { up: P.up, life: 0.6, lift: 0.4 });
   if (P.carrying >= 0 && items[P.carrying].planet !== newPlanet) returnItemHome(P.carrying);
@@ -1915,7 +1915,7 @@ requestAnimationFrame(loop);
 window.__game = { P, save, items, aliens, bodies, pads, mapUI, startParty, startFlight, openMap, deliver, cam, renderer,
   teleport(i) { placePupAt(i, PLANETS[i].dirs.land, aliens[i].pos); cam.fwd.copy(P.fwd); },
   grabItem(i) { const it = items[i]; it.state = 'carried'; P.carrying = i; },
-  walkTo(pos) { P.pos.copy(pos); },
+  nearAlien(i) { const a = aliens[i]; placePupAt(i, a.dir.clone().applyAxisAngle(anyTangent(a.dir), 2.6 / bodies[i].r), a.pos); cam.fwd.copy(P.fwd); },
   shootNow() { shoot.next = 0; },
 };
 addEventListener('beforeunload', () => { if (saveDirty) persist(); });
