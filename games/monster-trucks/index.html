@@ -505,7 +505,7 @@ function buildTerrain() {
     colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
   }
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3)); geo.computeVertexNormals();
-  const t = studTex('#ffffff', '#f3f3f3'); t.repeat.set(EXT * 2 / 1.6, EXT * 2 / 1.6); t.anisotropy = 8;
+  const t = studTex('#ffffff', '#f3f3f3'); t.repeat.set(EXT * 2 / 1.6, EXT * 2 / 1.6); t.anisotropy = 2;
   const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: t, vertexColors: true, roughness: 0.85 }));
   m.receiveShadow = true; scene.add(m);
   // mud puddles

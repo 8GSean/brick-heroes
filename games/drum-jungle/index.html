@@ -385,7 +385,7 @@ const AU = (() => {
 // =====================================================================
 //  Renderer / scene / lights
 // =====================================================================
-const isTouch = (matchMedia('(pointer: coarse)').matches && matchMedia('(hover: none)').matches) || (navigator.maxTouchPoints > 0 && /Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent));
+const isTouch = (matchMedia('(pointer: coarse)').matches && matchMedia('(hover: none)').matches) || (navigator.maxTouchPoints > 0 && /Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent)) || /[?&]touch/.test(location.search);
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 renderer.setSize(innerWidth, innerHeight);
@@ -1514,7 +1514,7 @@ function startConcert() {
 function updateFireworks(dt) {
   if (fireworksT > 0) {
     fireworksT -= dt;
-    if (Math.random() < dt * 3) { const a = Math.random() * TAU, R = rand(4, 14); rockets.push({ p: new V3(Math.cos(a) * R, 1, Math.sin(a) * R), v: new V3(rand(-1, 1), rand(14, 18), rand(-1, 1)), t: rand(.9, 1.3), c: ['#ffd23f', '#ff6fa5', '#5ce1ff', '#7ee05a', '#c98bff', '#ff9f43'][Math.floor(Math.random() * 6)] }); AU.voice('slide', 300, .08, rand(-.4, .4)); }
+    if (Math.random() < dt * 3) { const a = Math.random() * TAU, R = rand(4, 14); rockets.push({ p: new V3(Math.cos(a) * R, 1, Math.sin(a) * R), v: new V3(rand(-1, 1), rand(10, 13), rand(-1, 1)), t: rand(.75, 1), c: ['#ffd23f', '#ff6fa5', '#5ce1ff', '#7ee05a', '#c98bff', '#ff9f43'][Math.floor(Math.random() * 6)] }); AU.voice('slide', 300, .08, rand(-.4, .4)); }
   }
   for (let i = rockets.length - 1; i >= 0; i--) {
     const r = rockets[i]; r.t -= dt; r.v.y -= 9 * dt; r.p.addScaledVector(r.v, dt);
@@ -1777,9 +1777,15 @@ for (const [inst, deg, step, tid] of save.loop || []) if (INST[inst]) addEvent(i
 renderBand(); renderControls(); setInst('log'); setInst('marimba');
 
 let time = 0, last = performance.now(), hintT = 0, titleA = 0;
+let simSteps = 1;   // testing helper: run several updates per drawn frame
 function frame(now) {
   requestAnimationFrame(frame);
-  const dt = Math.min(.05, (now - last) / 1000); last = now; time += dt;
+  const dt = Math.min(.05, (now - last) / 1000); last = now;
+  for (let i = 0; i < simSteps; i++) update(simSteps > 1 ? .05 : dt);
+  renderer.render(scene, camera);
+}
+function update(dt) {
+  time += dt;
   SWAY.uTime.value = time; PU.uTime.value = time; PU.uScale.value = renderer.getPixelRatio() * innerHeight / 720;
   readInput();
   if (started) { updatePlayer(dt); updateCamera(dt); }
@@ -1798,7 +1804,6 @@ function frame(now) {
   for (const f of FRIENDS) f.g.visible = f.g.position.distanceToSquared(camera.position) < 70 * 70;
   // ambient birds
   if (started && Math.random() < dt * .15) AU.voice('whistle', midiHz(degMidi(84, Math.floor(rand(0, 5)))), .08, rand(-.7, .7));
-  renderer.render(scene, camera);
 }
 requestAnimationFrame(frame);
 
@@ -1809,6 +1814,7 @@ window.__game = {
   setCam(yaw, pitch) { camYaw = yaw; camPitch = pitch; camManualT = 0; },
   drawCalls: () => renderer.info.render.calls,
   get time() { return time; },
+  fast(n) { simSteps = n; },
 };
 </script>
 </body>

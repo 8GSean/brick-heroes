@@ -424,18 +424,20 @@ const eye = (x, y, z, s) => [['box', '#ffffff', x, y, z, s, s * 1.1, 0.08], ['bo
 
 // ---- static world: everything that never moves is batched into a few instanced meshes ----
 const STATIC = {};
+let castShadows = true;   // set false while adding tiny decorations (cheaper shadows)
 const dummy = new THREE.Object3D(); dummy.rotation.order = 'YXZ';
 function put(geo, color, x, y, z, sx, sy, sz, ry = 0, rx = 0, rz = 0) {
   dummy.position.set(x, y, z); dummy.rotation.set(rx, ry, rz); dummy.scale.set(sx, sy, sz); dummy.updateMatrix();
-  (STATIC[geo] || (STATIC[geo] = [])).push([dummy.matrix.clone(), col(color)]);
+  const key = geo + (castShadows ? '' : '|n');
+  (STATIC[key] || (STATIC[key] = [])).push([dummy.matrix.clone(), col(color)]);
 }
 function bakeStatic() {
-  for (const k in STATIC) {
-    const L = STATIC[k];
+  for (const key in STATIC) {
+    const L = STATIC[key], [k, ns] = key.split('|');
     const mat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: k === 'ico' ? 0.7 : 0.45, flatShading: k === 'ico' || k === 'cyl8' });
     const im = new THREE.InstancedMesh(GEO[k], mat, L.length);
     L.forEach((q, i) => { im.setMatrixAt(i, q[0]); im.setColorAt(i, q[1]); });
-    im.castShadow = k !== 'stud'; im.receiveShadow = true; scene.add(im);
+    im.castShadow = k !== 'stud' && !ns; im.receiveShadow = true; scene.add(im);
   }
 }
 
@@ -752,7 +754,7 @@ const FRUIT_MAX = 600;
 const FRUIT_COLORS = ['#ff3b3b', '#ff9f1c', '#9b5de5', '#ffd60a', '#ff5fa2'];
 const fruitMesh = new THREE.InstancedMesh(GEO.sph, new THREE.MeshStandardMaterial({ roughness: 0.25 }), FRUIT_MAX);
 const leafMesh = new THREE.InstancedMesh(GEO.box, new THREE.MeshStandardMaterial({ color: '#3fae3a', roughness: 0.5 }), FRUIT_MAX);
-for (const m of [fruitMesh, leafMesh]) { m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.count = 0; m.frustumCulled = false; m.castShadow = true; scene.add(m); }
+for (const m of [fruitMesh, leafMesh]) { m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.count = 0; m.frustumCulled = false; scene.add(m); }
 for (let i = 0; i < FRUIT_MAX; i++) fruitMesh.setColorAt(i, col('#ffffff'));
 const fruits = [];
 function addFruit(x, y, z, o = {}) {
@@ -939,6 +941,7 @@ function buildWorld() {
     if (Math.hypot(x, z) > CONFIG.grassR - 3 || blocked(x, z, 1) || trees.some(t => d2(x, z, t.x, t.z) < 4.2)) continue; makeJungleTree(x, z); i++; } };
   jungle(32, 26, 14, 16); jungle(-32, 30, 13, 14); jungle(-40, -6, 8, 5); jungle(20, -40, 8, 4);
   // flowers, grass tufts, pebbles, shells, clouds
+  castShadows = false;
   const fc = ['#ff5fa2', '#ffd23f', '#ffffff', '#9b5de5', '#ff7043', '#4fc3f7'];
   for (let i = 0, k = 0; i < CONFIG.flowerCount && k < 800; k++) {
     const a = sr(0, TAU), r = Math.sqrt(srng()) * (CONFIG.grassR - 1), x = Math.cos(a) * r, z = Math.sin(a) * r;
@@ -950,6 +953,7 @@ function buildWorld() {
     if (i % 2) put('cone8', i % 4 === 1 ? '#ff7f7f' : '#ffb3c6', x, 0.55, z, 0.5, 0.12, 0.5, sr(0, 3)); else put('ico', '#c9c9c9', x, 0.6, z, 0.6, 0.4, 0.6, sr(0, 3)); }
   // beach umbrellas & sandcastle
   const umb = (x, z, c) => { put('cyl8', '#ffffff', x, 1.8, z, 0.15, 2.6, 0.15); put('cone8', c, x, 3.3, z, 3.4, 0.9, 3.4); put('cone8', '#ffffff', x, 3.32, z, 1.6, 0.92, 1.6); };
+  castShadows = true;
   umb(10, 57, '#ff5fa2'); umb(-46, -36, '#4fc3f7'); umb(40, -42, '#ffd23f');
   put('box', '#f2c66d', 14, 0.9, 55, 2.2, 0.8, 2.2); put('box', '#f2c66d', 14, 1.6, 55, 1.4, 0.6, 1.4); put('cone8', '#f2c66d', 14, 2.3, 55, 0.9, 0.8, 0.9); addSolid(14, 55, 1.3, 1.3, -1, 'rock');
   // ptero perch rock & longneck drinking spot

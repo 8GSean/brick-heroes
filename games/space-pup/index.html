@@ -1226,7 +1226,7 @@ renderControls();
 let goalKey = '';
 const goalCv = $('goalcv'), goalG = goalCv.getContext('2d');
 function updateGoalHUD() {
-  const pl = bodies[P.body].planet, done = save.stars[pl], carrying = P.carrying >= 0;
+  const pl = bodies[P.flight ? P.flight.toBody : P.body].planet, done = save.stars[pl], carrying = P.carrying >= 0;
   const key = `${pl}|${done}|${carrying}|${nextPlanet(pl)}|${save.stars.join()}`;
   if (key === goalKey) return; goalKey = key;
   const g = goalG; g.clearRect(0, 0, 352, 160);
@@ -1419,7 +1419,7 @@ function land() {
   P.body = F.toBody; P.pos.copy(surf(F.toBody, F.toDir)); P.up.copy(F.toDir); P.vel.set(0, 0, 0); P.grounded = true;
   const newPlanet = bodies[P.body].planet;
   // face something useful: the alien if we just arrived on a planet
-  if (F.isTrip) { tangentOf(aliens[newPlanet].pos.clone().sub(P.pos), P.up, P.fwd); cam.fwd.copy(P.fwd); }
+  if (F.isTrip) { tangentOf(aliens[newPlanet].pos.clone().sub(P.pos), P.up, P.fwd).applyAxisAngle(P.up, 0.55); cam.fwd.copy(P.fwd); }
   else tangentOf(P.fwd, P.up, P.fwd);
   P.squash = 0.45; P.squashV = 0; P.padCool = 0.8;
   SFX.land(); burst(P.pos, 18, 4, ['#ffffff', PLANETS[newPlanet].c1], { up: P.up, life: 0.6, lift: 0.4 });
@@ -1671,7 +1671,7 @@ function updateAliens(dt, time) {
   if (partyT > 0) {
     partyT -= dt;
     if (Math.random() < dt * 3) {   // fireworks!
-      const B = bodies[P.body], p = B.c.clone().addScaledVector(P.up.clone().add(randDir().multiplyScalar(0.8)).normalize(), B.r + rand(7, 12));
+      const B = bodies[P.body], p = B.c.clone().addScaledVector(P.up.clone().add(randDir().multiplyScalar(0.8)).normalize(), B.r + rand(16, 24));
       burst(p, 50, 9, [CONFETTI[Math.floor(Math.random() * 6)], '#ffffff'], { life: 1.2, size: 0.2, drag: 1.5 }); SFX.boom();
     }
     if (partyT <= 0) for (const a of aliens) if (a.state === 'party') { a.state = 'toHome'; a.t = 0; a.to.q = a.grp.quaternion.clone(); a.to.pos = a.grp.position.clone(); a.from.q = basisQuat(a.dir, a.fwd); a.from.pos = surf(a.i, a.dir); a.from.up = a.dir.clone(); }
