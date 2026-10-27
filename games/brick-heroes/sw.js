@@ -1,6 +1,6 @@
 // Brick Heroes service worker: lets the game start offline and load instantly after the first visit.
 // Bump VERSION whenever cached files change so players get the update.
-const VERSION = 'brick-heroes-v2';
+const VERSION = 'brick-heroes-v3';
 const CORE = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png',
   'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js',
   'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/environments/RoomEnvironment.js'];

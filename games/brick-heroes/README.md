@@ -18,6 +18,8 @@ It's made so a kid who can't read yet still has fun: every prompt is a picture.
 | Build (hold near a pile with the 🔨 bubble) | B | B (or F) |
 | Switch hero | Y / LB | Tab, or 1–4 |
 | Mute | Back/View | M |
+| Talking on/off (🗣️ button) | | V |
+| Language English / Hebrew (flag button) | | L |
 
 **On a phone or tablet** the game switches to touch controls automatically. The first tap goes full screen and turns to landscape (on Android and iPad). On iPhone, use Share → Add to Home Screen to play full screen.
 - Touch and drag anywhere on the left side for a joystick that follows your thumb.
@@ -26,6 +28,10 @@ It's made so a kid who can't read yet still has fun: every prompt is a picture.
 - Tap a hero portrait to switch heroes.
 
 The game can be installed as an app, and after the first visit it also works offline.
+
+Things to build (hold B at a brick pile): trampoline, stud fountain, golden statue, race car (walk in to drive, jump to get out), pizza stand (catch the pizzas), giant piano (step on the keys), rainbow stairs + rooftop slide, hero cannon (flies you onto the tallest tower), rocket (ride it up into the fireworks), hot-air balloon (float over the city), merry-go-round, and a dancing robot with a disco floor.
+
+A friendly voice talks about what is happening (turn it off with 🗣️). The game speaks and shows its text in English or Hebrew; all words live in the `STRINGS` table near the top of the script, so you can add another language.
 
 Heroes: red flyer (flight and lasers), shield captain (boomerang shield), big green smasher (ground pound) and web hero (web zip, triple jump). The last two are unlocked by finding their glowing tokens.
 
@@ -62,7 +68,8 @@ This section is written for an AI coding assistant (Claude Code, Copilot, Cursor
 ### Verifying it works
 - The title screen shows "BRICK HEROES" over an orbiting view of the city. After you click, the HUD appears (stud counter top-left, gold brick slots top-right, hero portraits bottom-center).
 - The browser console should show no errors. If it reports failed module imports, the machine can't reach `cdn.jsdelivr.net`.
-- For debugging, game state is exposed at `window.__game` (`player`, `buildables`, `goldBricks`, `save`, `boss`, `studs`, `targets`).
+- For debugging, game state is exposed at `window.__game` (`player`, `buildables`, `smashables`, `goons`, `goldBricks`, `save`, `boss`, `studs`, `targets`, plus helpers like `tp(x, z)`, `buildAll()` and `speed`).
+- Multiplayer hooks: world events go through `completeBuild(b, remote)`, `smashTarget(t, dir, remote)` and `collectGold(g, remote)`; local events call `NET.send(type, data)`. Buildables, smashables and goons have stable `id`s (creation order), gold bricks have string ids.
 
 ### Common tasks
 - **Reset progress:** click "Reset progress" on the title screen, or run `localStorage.removeItem('brick-heroes-v1')` in the console.

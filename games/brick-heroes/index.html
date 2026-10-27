@@ -1438,6 +1438,7 @@ function completeBuild(b, remote = false) {
   for (const q of b.pieces) if (q.t < 1) settlePiece(q);
   b.placed = b.pieces.length; b.built = true; b.prompt.visible = false; builtAny = true;
   SFX.built(); confetti(new V3(b.x, 2, b.z), 50); smoke(new V3(b.x, .5, b.z), 12, .9); rumble(.5, .4, 200);
+  burstStuds(new V3(b.x, 2.5, b.z), [6, 2, 0, 0]);
   b.onBuilt(b);
   say(b.say || 'built', { prio: 2, cool: 0 });
   if (!remote) NET.send('build', { id: b.id });
@@ -2011,6 +2012,374 @@ function building(x, z, w, d, h, color) {
   studCircle(0, x, top + 1.2, z, Math.min(w, d) / 2 - 1.5, 8);
   return top;
 }
+// =====================================================================
+//  Fun builds: each one is a brick pile you hold B at, and each one DOES something.
+//  PB = box piece, PC = cylinder piece, PK = cone piece (sizes, colour, centre x/y/z, extras)
+// =====================================================================
+const PB = (w, h, d, c, x, y, z, e) => Object.assign({ w, h, d, c, x, y, z }, e);
+const PC = (dia, h, c, x, y, z, e) => Object.assign({ s: 'cyl', w: dia, h, d: dia, c, x, y, z }, e);
+const PK = (dia, h, c, x, y, z, e) => Object.assign({ s: 'cone', w: dia, h, d: dia, c, x, y, z }, e);
+const rnd = arr => arr[Math.floor(Math.random() * arr.length)];
+function firework(p, n = 40) {
+  const c = rnd(RAINBOW);
+  for (let i = 0; i < n; i++) {
+    const a = rand(0, TAU), e = rand(-1, 1), r = Math.sqrt(1 - e * e), sp = rand(9, 13);
+    fx(glowFX, p.x, p.y, p.z, { vx: Math.cos(a) * r * sp, vy: e * sp, vz: Math.sin(a) * r * sp, s: .35, color: c, life: rand(1, 1.5), grav: -5, drag: 1.6, shrink: true });
+  }
+  SFX.firework();
+}
+
+// ---------- 🚀 rocket: stand on it, 3-2-1, it carries you up into the sky and explodes into fireworks + studs ----------
+function buildRocket(x, z) {
+  const R = { part: 'rocket' }, P = [PC(5, .5, '#6c757d', 0, .25, 0)];
+  for (const [a, c] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) P.push(PB(.8, .08, .8, '#ffd23f', a * 1.9, .54, c * 1.9));
+  P.push(PC(1.1, .3, '#495057', 0, .65, 0, R));
+  P.push(PC(1.6, 1.2, '#f8f9fa', 0, 1.4, 0, R), PC(1.6, 1.2, '#e63946', 0, 2.6, 0, R), PC(1.6, 1.2, '#f8f9fa', 0, 3.8, 0, R));
+  P.push(PK(1.6, 1.6, '#e63946', 0, 5.2, 0, R));
+  P.push(PB(.7, .7, .15, '#6ec6ff', 0, 3.8, .78, { ...R, o: { metalness: .3, roughness: .1, emissive: '#1d3557', emissiveIntensity: .4 } }));
+  for (let i = 0; i < 4; i++) { const a = i / 4 * TAU + Math.PI / 4; P.push(PB(.15, 1.3, 1, '#1d4ed8', Math.sin(a) * .95, 1.3, Math.cos(a) * .95, { ...R, ry: a })); }
+  addBuildable(x, z, P, b => {
+    addCol(x - 2.5, 0, z - 2.5, x + 2.5, .5, z + 2.5);
+    const rk = b.parts.rocket; let state = 'idle', t = 0, vel = 0, beeps = 0; const fw = [];
+    const ride = { pose: 'cheer', exit: new V3(0, 6, 0), place(p) { p.set(x + rk.position.x, rk.position.y + 6, z); }, onEnd() { b.cool = 2; } };
+    b.update = (b, dt) => {
+      const p = player.pos; t += dt;
+      for (let i = fw.length - 1; i >= 0; i--) if (t > fw[i].t) { firework(fw[i].p); fw.splice(i, 1); }
+      if (state === 'idle') {
+        if (b.cool <= 0 && Math.hypot(p.x - x, p.z - z) < 2.4 && p.y < 2.5 && startRide(ride)) { state = 'count'; t = 0; beeps = 0; say('countdown', { prio: 2, cool: 0 }); }
+      } else if (state === 'count') {
+        rk.position.x = Math.sin(time * 40) * .04 * t;
+        if (t > beeps * .9 && beeps < 3) { beeps++; SFX.beep(false); smoke(new V3(x, .6, z), 4, .6); }
+        if (t > 2.8) { state = 'up'; vel = 2; rk.position.x = 0; SFX.beep(true); SFX.boom(); shake(.3); rumble(.7, .5, 400); smoke(new V3(x, .6, z), 16, 1.2); }
+      } else if (state === 'up') {
+        vel = Math.min(40, vel + 28 * dt); rk.position.y += vel * dt;
+        const by = rk.position.y + .4;
+        for (let i = 0; i < 3; i++) fx(glowFX, x + rand(-.3, .3), by, z + rand(-.3, .3), { vx: rand(-1.5, 1.5), vy: rand(-14, -8), vz: rand(-1.5, 1.5), s: rand(.25, .45), color: rnd(['#ffec5c', '#ff9f1c', '#ff595e', '#ffffff']), life: .35, grav: 0, shrink: true });
+        if (Math.random() < dt * 10) { smoke(new V3(x, by, z), 2, .7, '#dddddd'); SFX.jet(); }
+        if (rk.position.y > CONFIG.rocketHeight) {
+          state = 'gone'; t = 0; rk.visible = false;
+          const top = new V3(x, rk.position.y + 4, z);
+          firework(top, 60); SFX.boom(); confetti(top, 60, 1.4); burstStuds(top, [18, 6, 2, 0], 1.6);
+          for (let i = 0; i < 6; i++) fw.push({ t: .25 + i * .3, p: new V3(x + rand(-12, 12), top.y + rand(-4, 8), z + rand(-12, 12)) });
+          if (player.ride === ride) ride.done = true;
+        }
+      } else if (state === 'gone' && t > 5) {
+        state = 'back'; t = 0; rk.position.set(0, 0, 0); rk.visible = true; rk.scale.setScalar(.01); SFX.pop(); sparkle(new V3(x, 3, z), '#ffffff', 16, 6);
+      } else if (state === 'back') {
+        const k = Math.min(1, t * 2); rk.scale.setScalar(Math.max(.01, 1 + 2.7 * Math.pow(k - 1, 3) + 1.7 * Math.pow(k - 1, 2)));
+        if (k >= 1) { state = 'idle'; b.cool = 1; }
+      }
+    };
+  }, { say: 'bRocket' });
+  keepOut.push([x, z, 4]);
+}
+
+// ---------- 🎈 hot-air balloon: walk into the basket, float high over the city through a trail of studs ----------
+function buildBalloon(x, z) {
+  const Bp = { part: 'bal' }, P = [PB(1.9, 1, 1.9, '#a0522d', 0, .5, 0, Bp)];
+  for (const s of [-1, 1]) P.push(PB(2.1, .2, .2, '#7a3e12', 0, 1.05, s * .95, Bp), PB(.2, .2, 2.1, '#7a3e12', s * .95, 1.05, 0, Bp));
+  for (const a of [-1, 1]) for (const c of [-1, 1]) P.push(PB(.08, 2.6, .08, '#5c3d1e', a * .85, 2.3, c * .85, Bp));
+  P.push(PB(.5, .4, .5, '#495057', 0, 3.3, 0, Bp));
+  const W = [2.6, 3.8, 4.6, 5, 5, 4.6, 3.8, 2.6], C = ['#ff595e', '#ffca3a', '#8ac926', '#1982c4', '#6a4c93', '#ff924c', '#ff66c4', '#ffffff'];
+  W.forEach((w, i) => P.push(PC(w, .9, C[i], 0, 3.95 + i * .9, 0, Bp)));
+  P.push(PC(1.4, .3, '#ffd23f', 0, 10.85, 0, Bp));
+  const path = (u, out) => { const a = u * TAU, R = Math.sin(u * Math.PI); return out.set(Math.sin(a) * 26 * R, CONFIG.balloonHeight * Math.pow(R, .6), -(1 - Math.cos(a)) * 13 * R); };
+  addBuildable(x, z, P, b => {
+    const bal = b.parts.bal; let flying = false, u = 0, puff = 0;
+    for (let i = 3; i <= 17; i++) { const q = path(i / 20, new V3()); addStud(i === 10 ? 2 : i % 3 ? 0 : 1, x + q.x, q.y + 1.5, z + q.z); }
+    const ride = { pose: 'cheer', exit: new V3(0, 4, 0), place(p) { p.set(x + bal.position.x, bal.position.y + .25, z + bal.position.z); }, onEnd() { b.cool = 2; } };
+    b.update = (b, dt) => {
+      const p = player.pos;
+      if (!flying) {
+        bal.rotation.z = Math.sin(time * 1.3) * .03;
+        if (b.cool <= 0 && Math.hypot(p.x - x, p.z - z) < 1.5 && p.y < 2.5 && startRide(ride)) { flying = true; u = 0; puff = 0; SFX.whoosh(); }
+        return;
+      }
+      u += dt / CONFIG.balloonTime;
+      if (u >= 1) { flying = false; bal.position.set(0, 0, 0); bal.rotation.z = 0; if (player.ride === ride) ride.done = true; b.cool = 2; smoke(new V3(x, .3, z), 8, .7); SFX.land(); return; }
+      path(u, bal.position); bal.rotation.z = Math.sin(time * .9) * .05;
+      puff -= dt;
+      if (puff <= 0) { puff = 2.5; SFX.whoosh(); }
+      if (puff > 2) fx(glowFX, x + bal.position.x, bal.position.y + 3.5, z + bal.position.z, { vx: rand(-.5, .5), vy: rand(4, 7), vz: rand(-.5, .5), s: rand(.2, .35), color: rnd(['#ffec5c', '#ff9f1c', '#ffffff']), life: .3, grav: 0, shrink: true });
+    };
+  }, { say: 'bBalloon' });
+  keepOut.push([x, z, 3.5]);
+}
+
+// ---------- 🎠 merry-go-round: step on, sit on a bobbing horse, music box tune, studs every full turn ----------
+function buildMerry(x, z) {
+  const S = { part: 'spin' }, RAD = 2.6;
+  const P = [PC(7.4, .25, '#adb5bd', 0, .125, 0), PC(7, .2, '#ffd6e0', 0, .35, 0, S), PC(.6, 4.5, '#ffd23f', 0, 2.7, 0, S), PC(8, .35, '#ffffff', 0, 5.1, 0, S), PK(8.4, 2, '#ff595e', 0, 6.25, 0, S), PC(.5, .6, '#ffd23f', 0, 7.5, 0, S)];
+  const HC = ['#ffffff', '#ff8fab', '#8fd3ff', '#ffe066'];
+  for (let i = 0; i < 4; i++) {
+    const f = i / 4 * TAU, sx = Math.sin(f) * RAD, sz = Math.cos(f) * RAD, tx = Math.cos(f), tz = -Math.sin(f), hp = { part: 'spin/h' + i }, ry = f + Math.PI / 2;
+    P.push(PC(.14, 4.6, '#ffd23f', sx, 2.75, sz, S));
+    P.push(PB(.55, .6, 1.3, HC[i], sx, 1.5, sz, { ...hp, ry }), PB(.4, .7, .45, HC[i], sx + tx * .6, 2.0, sz + tz * .6, { ...hp, ry }), PB(.6, .12, .6, '#e63946', sx, 1.86, sz, { ...hp, ry }));
+    P.push(PB(.12, .6, .12, '#555555', sx + tx * .45, .95, sz + tz * .45, hp), PB(.12, .6, .12, '#555555', sx - tx * .45, .95, sz - tz * .45, hp));
+  }
+  addBuildable(x, z, P, b => {
+    addCol(x - 2.6, 0, z - 2.6, x + 2.6, .45, z + 2.6);
+    const spin = b.parts.spin; let speed = .5, turned = 0, seat = 0, chimeT = 0, ci = 0;
+    const ride = { pose: 'sit', place(p) {
+      const a = seat * TAU / 4 + spin.rotation.y, bob = b.parts['spin/h' + seat].position.y;
+      p.set(x + Math.sin(a) * RAD, 1.1 + bob, z + Math.cos(a) * RAD); ride.yaw = Math.atan2(Math.cos(a), -Math.sin(a));
+    }, onEnd() { b.cool = 1.5; } };
+    b.update = (b, dt) => {
+      const p = player.pos, riding = player.ride === ride;
+      speed = lerp(speed, riding ? CONFIG.merrySpin : .5, 1 - Math.exp(-2 * dt));
+      spin.rotation.y += speed * dt;
+      for (let i = 0; i < 4; i++) b.parts['spin/h' + i].position.y = Math.sin(time * 3 + i * Math.PI / 2) * .3;
+      if (!riding && b.cool <= 0 && Math.hypot(p.x - x, p.z - z) < 3.4 && p.y < 1.4) {
+        let bd = 1e9;
+        for (let i = 0; i < 4; i++) { const a = i * TAU / 4 + spin.rotation.y, d = Math.hypot(p.x - x - Math.sin(a) * RAD, p.z - z - Math.cos(a) * RAD); if (d < bd) { bd = d; seat = i; } }
+        if (startRide(ride)) { turned = 0; SFX.boing(); }
+      }
+      if (riding) {
+        chimeT -= dt; if (chimeT <= 0) { chimeT = .3; SFX.chime(ci++); }
+        turned += speed * dt;
+        if (turned >= TAU) { turned -= TAU; burstStuds(new V3(x, 5.6, z), [4, 1, 0, 0], .8); sparkle(new V3(x, 5.6, z), '#ffe066', 12, 6); }
+      }
+    };
+  }, { say: 'bMerry' });
+  keepOut.push([x, z, 4.6]);
+}
+
+// ---------- 🍕 pizza stand: throws pizzas to you; catch them for studs ----------
+function makePizza() {
+  const g = new THREE.Group();
+  cyl(.55, .12, '#f4a261', 0, 0, 0, g); cyl(.47, .13, '#ffd23f', 0, .01, 0, g);
+  for (let i = 0; i < 3; i++) { const a = i / 3 * TAU; cyl(.1, .14, '#c1121f', Math.cos(a) * .25, .02, Math.sin(a) * .25, g); }
+  return g;
+}
+function buildPizza(x, z) {
+  const P = [
+    PB(1.4, 1.2, 3.2, '#e63946', 0, .6, 0), PB(1.6, .15, 3.4, '#ffffff', .05, 1.27, 0), PB(.06, .25, 3.2, '#ffffff', .72, .8, 0),
+    PB(1.4, 1.9, 1.8, '#bc6c25', -1.5, .95, 0), PB(.06, .7, .9, '#1b1b1b', -.78, 1.1, 0, { o: { emissive: '#ff7b00', emissiveIntensity: .6 } }), PB(.45, 1.1, .45, '#6c757d', -1.7, 2.45, .4),
+    PC(.2, 2.6, '#ffffff', .65, 2.6, -1.5), PC(.2, 2.6, '#ffffff', .65, 2.6, 1.5),
+  ];
+  for (let i = 0; i < 4; i++) P.push(PB(2.4, .2, .9, i % 2 ? '#ffffff' : '#e63946', -.1, 4.0, -1.35 + i * .9));
+  P.push(PC(2.2, .2, '#f4a261', -.1, 4.2, 0), PC(1.9, .22, '#ffd23f', -.1, 4.22, 0));
+  for (let i = 0; i < 3; i++) { const a = i / 3 * TAU + .4; P.push(PC(.4, .26, '#c1121f', -.1 + Math.cos(a) * .5, 4.24, Math.sin(a) * .5)); }
+  addBuildable(x, z, P, b => {
+    addCol(x - .7, 0, z - 1.7, x + .8, 1.35, z + 1.7); addCol(x - 2.2, 0, z - .9, x - .8, 1.9, z + .9);
+    const pizzas = []; let throwT = .5;
+    b.update = (b, dt) => {
+      const p = player.pos, d = Math.hypot(p.x - x, p.z - z);
+      throwT -= dt;
+      if (throwT <= 0 && d < 18 && d > 2.5 && pizzas.length < 4 && !player.ride) {
+        throwT = CONFIG.pizzaEvery;
+        const tx = p.x + player.vel.x * .5 + rand(-1.5, 1.5), tz = p.z + player.vel.z * .5 + rand(-1.5, 1.5);
+        const s0 = new V3(x - .1, 4.6, z), T = .9 + d * .03, gy = groundAt(tx, tz, p.y + 2) + .05;
+        const m = makePizza(); m.position.copy(s0); scene.add(m);
+        pizzas.push({ m, v: new V3((tx - s0.x) / T, (gy - s0.y + 9 * T * T) / T, (tz - s0.z) / T), gy, landed: false, life: 9 });
+        SFX.thwip();
+      }
+      for (let i = pizzas.length - 1; i >= 0; i--) {
+        const q = pizzas[i], m = q.m;
+        if (!q.landed) {
+          q.v.y -= 18 * dt; m.position.addScaledVector(q.v, dt); m.rotation.y += dt * 12;
+          if (m.position.y <= q.gy && q.v.y < 0) { m.position.y = q.gy; q.landed = true; SFX.land(); }
+        } else { q.life -= dt; if (q.life < 1) m.scale.setScalar(Math.max(.01, q.life)); }
+        const dx = m.position.x - p.x, dz = m.position.z - p.z, dy = m.position.y - (p.y + 1);
+        if (dx * dx + dz * dz < 3.2 && Math.abs(dy) < 2.2) {
+          SFX.yum(); sparkle(m.position, '#ffd23f', 12, 6, .2); burstStuds(m.position.clone(), [3, 1, 0, 0], .5);
+          scene.remove(m); pizzas.splice(i, 1); continue;
+        }
+        if (q.life <= 0) { scene.remove(m); pizzas.splice(i, 1); }
+      }
+    };
+  }, { say: 'bPizza' });
+  keepOut.push([x - .7, z, 3.5]);
+}
+
+// ---------- 🤖 dancing robot: dances all day; step on the disco floor for a party (beat, flashing tiles, stud gifts) ----------
+function buildRobot(x, z) {
+  const P = [], TC = ['#ff595e', '#ffca3a', '#8ac926', '#1982c4', '#6a4c93', '#ff924c', '#ff66c4', '#4cc9f0', '#ffffff'];
+  for (let i = 0; i < 9; i++) P.push(PB(2.3, .2, 2.3, TC[i], (i % 3 - 1) * 2.4, .1, (Math.floor(i / 3) - 1) * 2.4, { uniq: true, o: { emissive: TC[i], emissiveIntensity: .25 } }));
+  const R = { part: 'bot' }, Z = -5;   // the robot stands behind the floor, facing +z (towards the camera)
+  for (const s of [-1, 1]) P.push(PB(1.2, .5, 1.6, '#33415c', s * .8, .25, Z + .1, R), PB(.8, 1.6, .8, '#4361ee', s * .8, 1.3, Z, R));
+  P.push(PB(2.4, .5, 1.2, '#33415c', 0, 2.35, Z, R), PB(2.8, 2.2, 1.6, '#4cc9f0', 0, 3.7, Z, R));
+  P.push(PB(1, .8, .1, '#ffd23f', 0, 3.9, Z + .83, { ...R, o: { emissive: '#ffd23f', emissiveIntensity: .8 } }));
+  P.push(PB(1.8, 1.3, 1.4, '#f72585', 0, 5.45, Z, R));
+  for (const s of [-1, 1]) P.push(PB(.4, .3, .1, '#ffffff', s * .42, 5.6, Z + .73, { ...R, o: { emissive: '#ffffff', emissiveIntensity: .9 } }));
+  P.push(PB(.8, .12, .1, '#1b1b1b', 0, 5.15, Z + .73, R), PC(.12, .8, '#adb5bd', 0, 6.5, Z, R), PC(.45, .45, '#ff595e', 0, 7.1, Z, { ...R, o: { emissive: '#ff595e', emissiveIntensity: .6 } }));
+  for (const [s, n] of [[-1, 'bot/aL'], [1, 'bot/aR']]) P.push(PB(.6, 1.8, .6, '#4361ee', s * 1.75, 3.7, Z, { part: n }), PB(.8, .5, .8, '#ffd23f', s * 1.75, 2.6, Z, { part: n }));
+  addBuildable(x, z, P, b => {
+    addCol(x - 3.6, 0, z - 3.6, x + 3.6, .2, z + 3.6); addCol(x - 1.5, 0, z + Z - .9, x + 1.5, 6.2, z + Z + .9);
+    const bot = b.parts.bot, aL = b.parts['bot/aL'], aR = b.parts['bot/aR'], tiles = b.pieces.slice(0, 9).map(q => q.m.material);
+    let ph = 0, beatT = 0, step = 0, giftT = 1.5;
+    const flash = m => { const c = rnd(RAINBOW); m.color.set(c); m.emissive.set(c); };
+    b.update = (b, dt) => {
+      const p = player.pos, on = Math.abs(p.x - x) < 3.6 && Math.abs(p.z - z) < 3.6 && p.y < 1.5 && !player.ride;
+      player.disco = on;
+      ph += dt * (on ? 9 : 3.5);
+      bot.position.y = Math.abs(Math.sin(ph)) * (on ? .45 : .2); bot.rotation.y = Math.sin(ph * .5) * (on ? .5 : .2);
+      aL.rotation.z = -(1.2 + Math.sin(ph) * .9); aR.rotation.z = 1.2 + Math.sin(ph + Math.PI) * .9;
+      aL.rotation.x = Math.sin(ph * .5) * .4; aR.rotation.x = -Math.sin(ph * .5) * .4;
+      if (on) {
+        beatT -= dt;
+        if (beatT <= 0) { beatT = .25; step++; if (step % 2) SFX.hat(); else SFX.kick(); for (const m of tiles) { flash(m); m.emissiveIntensity = .7; } }
+        giftT -= dt;
+        if (giftT <= 0) { giftT = 3; const h = new V3(x, 7, z + Z + 1); burstStuds(h, [3, 1, 0, 0], .9); confetti(h, 20, .8); SFX.robot(); }
+        say('dance', { cool: 60 });
+      } else if (Math.random() < dt * 3) { const m = rnd(tiles); flash(m); m.emissiveIntensity = .25; }
+    };
+  }, { say: 'bRobot', pivots: { bot: [0, 0, -5], 'bot/aL': [-1.75, 4.6, -5], 'bot/aR': [1.75, 4.6, -5] } });
+  keepOut.push([x, z, 5.5], [x, z - 5, 3]);
+}
+
+// ---------- 🎹 giant piano: every key you step or jump on plays a note; play all 8 for a stud shower ----------
+function buildPiano(x, z) {
+  const P = [PB(13.4, .15, 4.4, '#212529', 0, .075, 0)];
+  for (let i = 0; i < 8; i++) P.push(PB(1.5, .3, 3.6, '#f8f9fa', -5.6 + i * 1.6, .3, .3, { uniq: true }));
+  const BK = [0, 1, 3, 4, 5];
+  for (const i of BK) P.push(PB(.9, .3, 1.7, '#1b1b1b', -5.6 + (i + .5) * 1.6, .6, -.6));
+  P.push(PB(13.4, 1.6, .5, '#212529', 0, .8, -1.95), PB(13.6, .15, .6, '#ffd23f', 0, 1.67, -1.95, { o: { metalness: .8, roughness: .25 } }));
+  addBuildable(x, z, P, b => {
+    addCol(x - 6.7, 0, z - 1.7, x + 6.7, .45, z + 2.2);
+    for (const i of BK) { const bx = x - 5.6 + (i + .5) * 1.6; addCol(bx - .45, 0, z - 1.45, bx + .45, .75, z + .25); }
+    addCol(x - 6.7, 0, z - 2.2, x + 6.7, 1.75, z - 1.7);
+    const keys = b.pieces.slice(1, 9), FREQ = [261.6, 293.7, 329.6, 349.2, 392, 440, 493.9, 523.3], press = new Array(8).fill(0), played = new Set(), WHITE = col('#f8f9fa');
+    let last = -1;
+    const play = k => {
+      SFX.note(FREQ[k]); press[k] = .25; keys[k].m.material.color.set(RAINBOW[k]);
+      const top = new V3(x - 5.6 + k * 1.6, 1, z + .3);
+      sparkle(top, RAINBOW[k], 10, 5, .2); ring(top, 2, RAINBOW[k], .4);
+      played.add(k);
+      if (played.size === 8) { played.clear(); burstStuds(new V3(x, 2, z + 3), [12, 4, 1, 0], 1.2); confetti(new V3(x, 3, z), 50); say('music', { prio: 2, cool: 30 }); }
+    };
+    b.update = (b, dt) => {
+      const p = player.pos, on = Math.abs(p.x - x) < 6.4 && p.z > z - 1.5 && p.z < z + 2.1 && p.y < 1 && player.onGround && !player.ride;
+      const k = on ? clamp(Math.round((p.x - x + 5.6) / 1.6), 0, 7) : -1;
+      if (k >= 0 && k !== last) play(k);
+      last = k;
+      for (let i = 0; i < 8; i++) {
+        press[i] = Math.max(0, press[i] - dt); keys[i].m.position.y = .3 - press[i] * .5;
+        if (press[i] <= 0) keys[i].m.material.color.lerp(WHITE, 1 - Math.exp(-3 * dt));
+      }
+    };
+  }, { say: 'bPiano' });
+  keepOut.push([x - 5, z, 3.5], [x, z, 3.5], [x + 5, z, 3.5]);
+}
+
+// ---------- 🛝 rainbow stairs up to a rooftop + a slide that zooms you back down ----------
+function buildRoofSlide(x, z) {   // the building's north wall is at z + 8.8, its roof is 6 high, the slide goes off the south side
+  const P = [], SC = ['#ff595e', '#ff924c', '#ffca3a', '#8ac926', '#1982c4', '#6a4c93'];
+  for (let i = 0; i < 14; i++) { const top = (i + 1) * .43; P.push(PB(3, top, 1, SC[i % 6], 0, top / 2, -4.7 + i)); }
+  const a = Math.atan2(5.7, 9.8), L = Math.hypot(5.7, 9.8);
+  P.push(PB(2.2, .25, L, '#ffca3a', 0, 3.15, 24.1, { rx: a }));
+  for (const s of [-1, 1]) P.push(PB(.2, .6, L, '#ff595e', s * 1.15, 3.45, 24.1, { rx: a }));
+  P.push(PB(3.2, .2, 1.2, '#ff595e', 0, 6.1, 18.8));
+  addBuildable(x, z, P, b => {
+    for (let i = 0; i < 14; i++) { const top = (i + 1) * .43, zc = z - 4.7 + i; addCol(x - 1.5, 0, zc - .5, x + 1.5, top, zc + .5); }
+    for (let i = 1; i <= 5; i++) { const t = i / 6; addStud(1, x, lerp(6.15, .5, t * t) + 1.2, lerp(z + 19.3, z + 29.3, t * t)); }
+    let u = 0;
+    const ride = { pose: 'sit', yaw: 0, exit: new V3(0, 3, 16), place(p, dt) {
+      u = Math.min(1, u + dt / .9); const e = u * u;
+      p.set(x, lerp(6.15, .5, e), lerp(z + 19.3, z + 29.3, e));
+      if (Math.random() < .6) sparkle(new V3(p.x, p.y + .5, p.z), rnd(RAINBOW), 2, 3, .15);
+      if (u >= 1) ride.done = true;
+    }, onEnd() { b.cool = 1; } };
+    b.update = (b, dt) => {
+      const p = player.pos;
+      if (b.cool <= 0 && !player.ride && p.y > 5.5 && p.y < 7 && Math.abs(p.x - x) < 1.6 && p.z > z + 17.6 && p.z < z + 19.8) { u = 0; if (startRide(ride)) SFX.whoosh(); }
+    };
+  }, { say: 'bSlide' });
+  keepOut.push([x, z - 4, 2.5], [x, z, 2.5], [x, z + 4, 2.5], [x, z + 8, 2.5], [x, z + 22, 2.2], [x, z + 26, 2.2], [x, z + 30, 2.5]);
+}
+
+// ---------- 🏎️ race car: walk into it to drive fast and crash through things; jump to get out ----------
+function buildKart(x, z) {
+  const K = { part: 'kart' };
+  const P = [
+    PB(1.8, .35, 3, '#ff595e', 0, .5, 0, K), PB(1.2, .3, .8, '#ff595e', 0, .5, 1.85, K), PB(2.1, .25, .3, '#212529', 0, .45, 2.3, K),
+    PB(1, .7, .35, '#212529', 0, 1.0, -.75, K), PB(1.2, .5, .6, '#adb5bd', 0, .92, -1.25, K),
+    PB(2.1, .12, .6, '#ffd23f', 0, 1.6, -1.45, K), PB(.12, .5, .12, '#212529', -.7, 1.3, -1.45, K), PB(.12, .5, .12, '#212529', .7, 1.3, -1.45, K),
+    PB(.1, .5, .1, '#212529', 0, .9, .75, { ...K, rx: -.6 }), PC(.55, .08, '#212529', 0, 1.12, .62, { ...K, rx: -1 }),
+    PC(.55, .06, '#ffffff', 0, .68, 1.9, K),
+  ];
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) P.push(PC(.85, .45, '#212529', sx * 1.08, .42, sz * 1.1, { ...K, rz: Math.PI / 2, wheel: true }));
+  addBuildable(x, z, P, b => {
+    b.cool = 1.5; b.wheels = b.pieces.filter(q => q.p.wheel);
+    const k = b.parts.kart;
+    b.update = (b, dt) => {
+      if (player.kart === b) return;
+      const p = player.pos;
+      if (b.cool <= 0 && !player.ride && !player.building && Math.hypot(p.x - x - k.position.x, p.z - z - k.position.z) < 2 && Math.abs(p.y - k.position.y) < 1.5) enterKart(b);
+    };
+  }, { say: 'bKart' });
+  keepOut.push([x, z, 3]);
+}
+function enterKart(b) {
+  if (player.ride || player.kart) return;
+  const k = b.parts.kart;
+  player.kart = b; player.pos.set(b.x + k.position.x, k.position.y, b.z + k.position.z); player.yaw = k.rotation.y; player.dance = 0;
+  SFX.honk(); say('kartIn', { cool: 60 });
+}
+function exitKart() {
+  const b = player.kart; if (!b) return;
+  player.kart = null; b.cool = 1.2;
+  player.vel.y = hero().jump; player.onGround = false; player.jumps = 1; SFX.jump();
+}
+function placeKart(dt, hs) {
+  const b = player.kart, k = b.parts.kart, p = player.pos, fig = player.figs[player.hero];
+  k.position.set(p.x - b.x, p.y, p.z - b.z); k.rotation.y = player.yaw;
+  fig.position.x -= Math.sin(player.yaw) * .3; fig.position.z -= Math.cos(player.yaw) * .3;
+  for (const q of b.wheels) q.m.rotation.x += hs * dt * 2.4;
+  b.engT = (b.engT || 0) - dt;
+  if (b.engT <= 0 && hs > 1) { b.engT = .12; SFX.engine(hs); }
+  if (hs > 12 && Math.random() < dt * 10) smoke(new V3(p.x - Math.sin(player.yaw) * 1.8, p.y + .3, p.z - Math.cos(player.yaw) * 1.8), 1, .4, '#cccccc');
+}
+function kartBump(v) {   // driving fast into things smashes them
+  const p = player.pos; if (Math.hypot(v.x, v.z) < 6) return;
+  for (const t of targets) {
+    if (!t.alive) continue;
+    const dx = t.pos.x - p.x, dz = t.pos.z - p.z, d = Math.hypot(dx, dz) || .01;
+    if (d < t.radius + 1.4 && Math.abs(t.pos.y - p.y) < 2.5 && (t.kartT || 0) < time) { t.kartT = time + .6; t.hit(t.big ? 1 : 3, { x: dx / d, z: dz / d }); shake(.08); rumble(.3, .3, 80); }
+  }
+}
+
+// ---------- 💥 hero cannon: step in, it wobbles, BOOM, you fly in an arc onto a tall rooftop ----------
+function buildCannon(x, z, tx, ty, tz) {
+  const yaw = Math.atan2(tx - x, tz - z), al = .75, ca = Math.cos(al), sa = Math.sin(al);
+  const at = d => [0, 1.6 + ca * d, sa * d];
+  const P = [PB(2.6, .8, 2.6, '#6c757d', 0, .4, 0), PB(2.8, .2, 2.8, '#ffd23f', 0, .9, 0)];
+  for (const s of [-1, 1]) P.push(PC(1.8, .4, '#8a5a2b', s * 1.55, .9, 0, { rz: Math.PI / 2 }), PC(.5, .5, '#ffd23f', s * 1.55, .9, 0, { rz: Math.PI / 2 }));
+  P.push(PB(1.3, 1.3, 1.3, '#343a40', 0, 1.6, -.2));
+  let c = at(1.5); P.push(PC(1.4, 3, '#343a40', 0, c[1], c[2], { rx: al }));
+  c = at(.7); P.push(PC(1.6, .3, '#ffd23f', 0, c[1], c[2], { rx: al }));
+  c = at(2.9); P.push(PC(1.75, .4, '#ff595e', 0, c[1], c[2], { rx: al }));
+  addBuildable(x, z, P, b => {
+    addCol(x - 1.1, 0, z - 1.1, x + 1.1, .9, z + 1.1);
+    const mz = at(3), muzzle = new V3(x + Math.sin(yaw) * mz[2], mz[1], z + Math.cos(yaw) * mz[2]), target = new V3(tx, ty + .05, tz);
+    const dir = new V3(Math.sin(yaw) * sa, ca, Math.cos(yaw) * sa);
+    let phase = 0, t = 0;
+    const ride = { pose: 'cheer', yaw, jumpOff: false, exit: new V3(0, 0, 0), place(p, dt) {
+      t += dt;
+      if (phase === 0) {
+        p.copy(muzzle).addScaledVector(dir, -1.4); p.y -= .6;
+        b.group.scale.setScalar(1 + Math.sin(t * 30) * .03 * t);
+        if (Math.random() < .5) sparkle(new V3(x - Math.sin(yaw) * .9, 2.3, z - Math.cos(yaw) * .9), '#ffb703', 2, 3, .15);
+        if (Math.random() < dt * 8) SFX.click();
+        if (t > 1) {
+          phase = 1; t = 0; ride.pose = 'fly'; b.group.scale.setScalar(1);
+          SFX.boom(); smoke(muzzle, 14, 1); confetti(muzzle, 30); ring(new V3(x, 0, z), 5, '#ffffff', .4); shake(.4); rumble(.8, .6, 300);
+        }
+      } else {
+        const u = Math.min(1, t / 1.9);
+        p.lerpVectors(muzzle, target, u); p.y += 56 * u * (1 - u);
+        if (Math.random() < .7) fx(glowFX, p.x, p.y + 1, p.z, { s: .3, color: rnd(RAINBOW), life: .5, grav: 0, shrink: true });
+        if (u >= 1) ride.done = true;
+      }
+    }, onEnd() { b.cool = 2; b.group.scale.setScalar(1); } };
+    b.update = (b, dt) => {
+      const p = player.pos;
+      if (b.cool <= 0 && !player.ride && Math.hypot(p.x - x, p.z - z) < 2.4 && p.y < 2.5 && startRide(ride)) { phase = 0; t = 0; ride.pose = 'cheer'; }
+    };
+  }, { say: 'bCannon', ry: yaw });
+  keepOut.push([x, z, 3.5]);
+}
+
 function buildWorld() {
   // island, water
   plate(216, 216, '#5cbf4a', 0, 0, 0, 3, '#6ccf5a', '#7a5230');
@@ -2084,7 +2453,7 @@ function buildWorld() {
     const arrow = spriteFromCanvas(ARROW_CANVAS, 1.8); arrow.position.set(b.x, 3.6, b.z); scene.add(arrow);
     b.update = () => { arrow.position.y = 3.6 + Math.sin(time * 5) * .3; };
     burstStuds(new V3(b.x, 2, b.z), [10, 3, 0, 0]);
-  });
+  }, { say: 'bTramp' });
   keepOut.push([tr.x, tr.z, 3]);
 
   // plaza fountain (build it: it sprays studs!)
@@ -2103,7 +2472,7 @@ function buildWorld() {
       b.erupt -= dt;
       if (b.erupt <= 0) { b.erupt = 12; burstStuds(new V3(0, 3.5, 0), [8, 2, 0, 0]); SFX.pop(); sparkle(new V3(0, 3.5, 0), '#8fd3ff', 20, 7); }
     };
-  });
+  }, { say: 'bFountain' });
   studCircle(0, 0, 1, 0, 12, 24);
 
   // hero statue (build it: gold brick!)
@@ -2115,7 +2484,18 @@ function buildWorld() {
     { w: .26, h: .7, d: .3, c: '#ffc21a', o: gm, x: -.62, y: 2.6, z: 0 }, { w: .26, h: .7, d: .3, c: '#ffc21a', o: gm, x: .62, y: 3.4, z: 0 },
     { w: .55, h: .5, d: .55, c: '#ffc21a', o: gm, x: 0, y: 3.45, z: 0 }, { w: .3, h: .15, d: .3, c: '#ffc21a', o: gm, x: 0, y: 3.78, z: 0 },
   ];
-  addBuildable(-14, -8, sp, b => { addCol(b.x - 1.3, 0, b.z - 1.3, b.x + 1.3, 1.2, b.z + 1.3); placeGold('statue', b.x, 5.4, b.z, true); });
+  addBuildable(-14, -8, sp, b => { addCol(b.x - 1.3, 0, b.z - 1.3, b.x + 1.3, 1.2, b.z + 1.3); placeGold('statue', b.x, 5.4, b.z, true); }, { say: 'bStatue' });
+
+  // more things to build (keep this order: a build's id is its place in the list, used by multiplayer)
+  buildKart(11, 15);                     // plaza, right next to the start
+  buildPizza(-22, 6);                    // plaza west
+  buildPiano(72, 24);                    // east block, by the trampoline tower
+  buildRoofSlide(-52, 4);                // west block: stairs up the pink house, slide down
+  buildCannon(-80, -24, -90, 20, -55);   // west block: shoots you onto the tallest tower
+  buildRocket(-72, -80);                 // north-west block
+  buildBalloon(82, -52);                 // north-east block
+  buildMerry(-19, -50);                  // park (outside the Brick Bot's patrol)
+  buildRobot(0, 88);                     // south block
 
   // gold bricks already in the world
   placeGold('tower', 70, 19.4, -5);
@@ -2188,7 +2568,7 @@ const portraits = player.figs.map(f => portraitURL(f.userData.faceCanvas));
 // =====================================================================
 //  Main loop
 // =====================================================================
-let started = false, time = 0, last = performance.now(), persistT = 0;
+let started = false, time = 0, last = performance.now(), persistT = 0, timeScale = 1;   // timeScale: slow-motion / fast-forward (testing)
 function anyInput() {
   A.init();
   if (started) return;
@@ -2211,7 +2591,7 @@ function governFPS(now) {
 }
 function loop(now) {
   requestAnimationFrame(loop);
-  const dt = Math.min(.05, (now - last) / 1000); last = now; time += dt;
+  const dt = Math.min(.05, (now - last) / 1000) * timeScale; last = now; time += dt;
   for (const c of clouds) { c.position.x += c.userData.v * dt; if (c.position.x > 180) c.position.x = -180; }
   if (!started) {
     readInput();
@@ -2240,17 +2620,17 @@ function loop(now) {
 }
 requestAnimationFrame(loop);
 // handy for debugging in the console (and for the multiplayer layer)
-window.__game = { player, buildables, smashables, goons, goldBricks, save, boss, studs, targets, settings, sayLog, NET,
+window.__game = { renderer, scene, camera, player, buildables, smashables, goons, goldBricks, save, boss, studs, targets, settings, sayLog, NET,
   completeBuild, smashTarget, collectGold, findTarget, toggleVoice, toggleLang, say,
-  tp(x, z, y = 0) { player.pos.set(x, y, z); player.vel.set(0, 0, 0); camLook.set(x, y + 2, z); },
-  buildAll() { buildables.forEach(b => completeBuild(b)); } };
-addEventListener('beforeunload', () => { if (saveDirty) persist(); });
+  tp(x, z, y = 0) { player.ride = null; player.kart = null; player.pos.set(x, y, z); player.vel.set(0, 0, 0); camLook.set(x, y + 2, z); },
+  buildAll() { buildables.forEach(b => completeBuild(b)); }, set speed(v) { timeScale = v; }, get speed() { return timeScale; } };
+addEventListener('beforeunload', () => { if (saveDirty) persist(); hushVoice(); });
 // phones rarely fire beforeunload: save and go quiet whenever the page is hidden
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { if (saveDirty) persist(); A.pause(true); for (const k in keys) keys[k] = false; touch.btn = {}; }
+  if (document.hidden) { if (saveDirty) persist(); A.pause(true); hushVoice(); for (const k in keys) keys[k] = false; touch.btn = {}; }
   else { A.pause(false); last = performance.now(); fpsT0 = 0; }
 });
-addEventListener('pagehide', () => { if (saveDirty) persist(); });
+addEventListener('pagehide', () => { if (saveDirty) persist(); hushVoice(); });
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
