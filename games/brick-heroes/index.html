@@ -160,6 +160,58 @@
   .bigA { width: 96px; height: 96px; border-radius: 50%; background: #2ecc40; color: #fff; font-size: 56px; display: grid; place-items: center; box-shadow: 0 7px 0 #1a8a28; border: 5px solid #fff; }
   .bigIco { font-size: 70px; filter: drop-shadow(0 5px 0 rgba(0,0,0,.3)); }
   #reset { position: absolute; right: 14px; bottom: 12px; font: 14px system-ui, sans-serif; background: rgba(0,0,0,.25); color: #fff; border: 0; border-radius: 8px; padding: 6px 10px; cursor: pointer; opacity: .6; }
+  /* ---- play together (co-op) ---- */
+  .emo { font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; }
+  #coop { position: absolute; right: 184px; top: 54px; pointer-events: auto; font-size: 28px; background: rgba(20,30,60,.45); border: 0; border-radius: 50%; width: 50px; height: 50px; cursor: pointer; padding: 0; line-height: 50px; text-align: center; }
+  #coop.on { background: rgba(46,204,64,.75); }
+  #coopbar { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); display: none; flex-direction: column; align-items: center; gap: 4px; pointer-events: none; }
+  #coopbar.show { display: flex; }
+  #cooprow { display: flex; align-items: center; gap: 6px; background: rgba(20,30,60,.5); border: 3px solid rgba(255,255,255,.85); border-radius: 30px; padding: 3px 8px; pointer-events: auto; }
+  #coopbar button { border: 0; background: none; cursor: pointer; padding: 0; color: #fff; }
+  #coopnet { font-size: 24px; position: relative; width: 34px; height: 34px; line-height: 34px; text-align: center; }
+  #coopnet.wait { animation: blink 1s steps(2) infinite; }
+  #coopnet.bad { filter: grayscale(1); opacity: .7; }
+  #coopnet.bad::after { content: '❌'; position: absolute; right: -4px; bottom: -4px; font-size: 14px; line-height: 1; }
+  @keyframes blink { 50% { opacity: .3; } }
+  #coopcode { font-size: 34px; letter-spacing: 4px; line-height: 44px; }
+  #cooplink { font-size: 22px; width: 34px; height: 34px; }
+  #coopfaces { display: flex; gap: 4px; }
+  #coopfaces img { width: 30px; height: 30px; border-radius: 50%; border: 3px solid #fff; background: #333; box-shadow: 0 2px 0 rgba(0,0,0,.3); }
+  #coopfaces img.me { width: 36px; height: 36px; }
+  #cooptoast { position: fixed; left: 50%; top: 28%; transform: translate(-50%, -50%); z-index: 70; pointer-events: none; opacity: 0; font-size: 84px; display: flex; align-items: center; gap: 14px; filter: drop-shadow(0 6px 0 rgba(0,0,0,.3)); }
+  #cooptoast img { width: 96px; height: 96px; border-radius: 50%; border: 6px solid #fff; background: #333; }
+  #cooptoast.show { animation: toast 2.6s ease-out forwards; }
+  #cooptoast.bye img { filter: grayscale(.7); }
+  @keyframes toast { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.3); } 12% { opacity: 1; transform: translate(-50%,-50%) scale(1.15); } 22% { transform: translate(-50%,-50%) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%,-70%) scale(.9); } }
+  body.touch #coop { right: calc(var(--sr) + 184px); top: calc(var(--st) + 54px); }
+  @media (orientation: portrait) {
+    body.touch #coop { top: calc(var(--st) + 66px); right: calc(var(--sr) + 128px); }
+    body.touch #coopbar { top: calc(var(--st) + 122px); left: auto; right: calc(var(--sr) + 10px); transform: none; align-items: flex-end; }
+    body.touch #coopcode { font-size: 26px; }
+  }
+  #tchoice { margin-top: min(44px, 5vh); display: flex; gap: 34px; align-items: center; }
+  #tchoice .press { margin-top: 0; border-radius: 60px; padding: 8px; }
+  #tcoop { position: relative; width: 104px; height: 104px; border-radius: 50%; border: 5px solid #fff; background: #8e44ad; box-shadow: 0 7px 0 #5b2c6f; font-size: 58px; cursor: pointer; padding: 0; animation: bob 1s ease-in-out infinite .5s; }
+  #tcode { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: 12px; font-size: 26px; white-space: nowrap; background: rgba(20,30,60,.5); border-radius: 16px; padding: 2px 8px; }
+  #tcode:empty { display: none; }
+  .navving .nav.focus, #coopui .nav.focus { outline: 6px solid #ffd23f; outline-offset: 5px; box-shadow: 0 0 26px #ffd23f; }
+  #coopui { position: fixed; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center; background: rgba(10,20,50,.6); }
+  #coopui.show { display: flex; }
+  #coopui .cpanel { background: rgba(30,50,100,.88); border: 4px solid rgba(255,255,255,.7); border-radius: 30px; padding: min(18px, 2.4vh) min(22px, 3vw); display: flex; flex-direction: column; align-items: center; gap: min(14px, 1.8vh); box-shadow: 0 10px 40px rgba(0,0,0,.35); --c: min(13vh, 20vw, 96px); }
+  #cslots { display: flex; gap: 10px; }
+  #cslots div { width: calc(var(--c) * .8); height: calc(var(--c) * .8); border-radius: 18px; background: rgba(20,30,60,.55); border: 4px dashed rgba(255,255,255,.7); display: grid; place-items: center; font-size: calc(var(--c) * .5); }
+  #cslots div.full { border-style: solid; background: #fff; animation: pop .25s; }
+  #cslots.shake { animation: shakeX .35s; }
+  @keyframes shakeX { 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+  #cgrid { display: grid; grid-template-columns: repeat(3, var(--c)); gap: min(12px, 1.5vh); }
+  #coopui button { width: var(--c); height: var(--c); border-radius: 22px; border: 4px solid #fff; background: #fff6d6; font-size: calc(var(--c) * .58); cursor: pointer; padding: 0; box-shadow: 0 5px 0 rgba(0,0,0,.3); transition: transform .08s; touch-action: manipulation; }
+  #coopui button:active { transform: translateY(3px) scale(.94); }
+  #cacts { display: flex; gap: min(12px, 1.5vw); }
+  #cacts button { background: #dfe8ff; width: calc(var(--c) * .85); height: calc(var(--c) * .85); font-size: calc(var(--c) * .45); }
+  #cacts #cgo { background: #b9f5c0; }
+  #cacts #cgo.ready { background: #2ecc40; animation: hot .8s ease-in-out infinite; }
+  #cacts button:disabled { opacity: .35; }
+  #cacts #csolo[hidden] { display: none; }
 </style>
 </head>
 <body>
@@ -172,6 +224,8 @@
   <button id="mute" title="Sound">🔊</button>
   <button id="voice" title="Voice">🗣️</button>
   <button id="lang" title="Language">🇬🇧</button>
+  <button id="coop" class="emo" title="Play together">👫</button>
+  <div id="coopbar"><div id="cooprow"><button id="coopnet" class="emo">📶</button><button id="coopcode" class="emo"></button><button id="cooplink" class="emo" title="Copy link">🔗</button></div><div id="coopfaces"></div></div>
   <div id="bossbar"><div class="ico">🤖</div><div class="bar"><div id="bossfill"></div></div></div>
   <div id="heroes"></div>
   <div id="controls"></div>
@@ -188,16 +242,29 @@
 </div>
 <div id="goldpop"><div class="brick"></div></div>
 <div id="trophy">🏆</div>
+<div id="cooptoast" class="emo"></div>
 
 <div id="title">
   <h1>BRICK<br>HEROES</h1>
   <div id="hesub">גיבורי הלבנים</div>
   <div class="sub txt" id="mission">⭐ Mission 1 ⭐</div>
-  <div class="press"><div class="bigA">A</div><div class="bigIco kbd">⌨️</div><div class="bigIco kbd">🖱️</div><div class="bigIco tap" style="display:none">👆</div></div>
+  <div id="tchoice">
+    <div class="press nav" id="tsolo"><div class="bigA">A</div><div class="bigIco kbd">⌨️</div><div class="bigIco kbd">🖱️</div><div class="bigIco tap" style="display:none">👆</div></div>
+    <button id="tcoop" class="nav emo" title="Play together">👫<span id="tcode"></span></button>
+  </div>
   <div id="rotate">📱</div>
   <div id="tiphint" class="txt"><b>⬆️</b> Share → <b>➕</b> Add to Home Screen for full screen play</div>
   <button id="reset" class="txt">Reset progress</button>
   <div id="tbtns"><button id="tvoice" title="Voice">🗣️</button><button id="tlang" title="Language">🇬🇧</button></div>
+</div>
+
+<!-- play together: pick 4 pictures = the room code -->
+<div id="coopui" class="emo">
+  <div class="cpanel">
+    <div id="cslots"><div></div><div></div><div></div><div></div></div>
+    <div id="cgrid"></div>
+    <div id="cacts"><button id="crand" class="nav">🎲</button><button id="cback" class="nav">⬅️</button><button id="ccopy" class="nav" title="Copy link">🔗</button><button id="cgo" class="nav">✅</button><button id="csolo" class="nav" hidden>👤</button><button id="cclose" class="nav">❌</button></div>
+  </div>
 </div>
 
 <script type="importmap">
@@ -239,7 +306,14 @@ const CONFIG = {
   balloonTime: 26,        // seconds for one balloon trip
   merrySpin: 1.4,         // merry-go-round speed while riding
   pizzaEvery: 1.3,        // seconds between pizza throws
+  // ---- play together (online co-op) ----
+  COOP_SERVER: 'wss://brick-heroes-coop.7seans.workers.dev',   // the relay server (see server/README.md); ?server=ws://... overrides it
+  coopSendHz: 10,         // position updates per second while you move (1 per second when standing still)
+  coopDelay: 130,         // ms: friends are shown this far in the past, so their movement looks smooth
+  coopColors: ['#ff3b30', '#1e6bff', '#2ecc40', '#ffd60a', '#b15cff', '#ff9500', '#00c7be', '#ff5fa2', '#9be22d', '#8b5a2b', '#ffffff', '#3d3d4d'],   // one colour per player slot (12)
+  coopPics: ['🍎', '🐶', '🚗', '⭐', '🐟', '🌈', '🍕', '🚀', '🐱'],   // room codes are 4 of these pictures
 };
+let netQuiet = false;     // true while applying friends' world quietly (no sounds, particles or talking)
 
 // =====================================================================
 //  Words: every text the game shows or says lives here.
@@ -284,7 +358,16 @@ const STRINGS = {
       hintSmash: 'Smash things to collect studs!',
       hintHero: 'Try a different hero!',
       hintPad: 'Jump on the bouncy pads!',
+      coopPick: 'Pick four pictures! Your friends pick the same ones.',
+      coopJoined: 'Yay! We are playing together!',
+      coopFriend: 'A friend joined!',
+      coopBye: 'A friend went home. Bye bye!',
+      coopFail: "I can't find your friends right now. Let's keep playing!",
+      coopFull: 'This room is full! Pick other pictures.',
+      hiFive: 'High five!',
     },
+    emo: ['apple', 'dog', 'car', 'star', 'fish', 'rainbow', 'pizza', 'rocket', 'cat'],   // names of CONFIG.coopPics, spoken aloud
+    together: 'Play together', copyLink: 'Copy link',
   },
   he: {
     flag: '🇮🇱', speech: 'he-IL', dir: 'rtl',
@@ -323,7 +406,16 @@ const STRINGS = {
       hintSmash: 'שברו דברים כדי לאסוף מטבעות!',
       hintHero: 'נסו גיבור אחר!',
       hintPad: 'קפצו על המשטחים הקופצניים!',
+      coopPick: 'בחרו ארבע תמונות! החברים בוחרים את אותן תמונות.',
+      coopJoined: 'יש! משחקים ביחד!',
+      coopFriend: 'חבר הצטרף!',
+      coopBye: 'חבר הלך הביתה. ביי ביי!',
+      coopFail: 'אני לא מוצא את החברים כרגע. בואו נמשיך לשחק!',
+      coopFull: 'החדר מלא! בחרו תמונות אחרות.',
+      hiFive: 'כיף!',
     },
+    emo: ['תפוח', 'כלב', 'מכונית', 'כוכב', 'דג', 'קשת', 'פיצה', 'טיל', 'חתול'],
+    together: 'משחקים ביחד', copyLink: 'העתקת קישור',
   },
 };
 const LANG_ORDER = ['en', 'he'];
@@ -343,6 +435,8 @@ function applyLang() {
   $('mute').title = L.sound; $('fs').title = L.fullscreen;
   for (const id of ['voice', 'tvoice']) { $(id).title = L.voice; $(id).textContent = settings.voice ? '🗣️' : '🤫'; $(id).classList.toggle('off', !settings.voice); }
   for (const id of ['lang', 'tlang']) { $(id).title = L.lang; $(id).textContent = L.flag; }
+  for (const id of ['coop', 'tcoop']) { $(id).title = T('together'); $(id).setAttribute('aria-label', T('together')); }
+  for (const id of ['cooplink', 'ccopy']) $(id).title = T('copyLink');
 }
 applyLang();
 
@@ -377,14 +471,14 @@ const A = (() => {
     setInterval(sched, 40);
   }
   function tone(f, dur = 0.12, type = 'square', vol = 0.15, slide = 0, delay = 0) {
-    if (!ctx) return; const t = ctx.currentTime + delay;
+    if (!ctx || netQuiet) return; const t = ctx.currentTime + delay;
     const o = ctx.createOscillator(), g = ctx.createGain(); o.type = type; o.frequency.setValueAtTime(f, t);
     if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(20, slide), t + dur);
     g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     o.connect(g); g.connect(sfx); o.start(t); o.stop(t + dur + 0.05);
   }
   function noise(dur = 0.2, vol = 0.2, freq = 1200, delay = 0, type = 'lowpass') {
-    if (!ctx) return; const t = ctx.currentTime + delay;
+    if (!ctx || netQuiet) return; const t = ctx.currentTime + delay;
     const s = ctx.createBufferSource(); s.buffer = noiseBuf; const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq;
     const g = ctx.createGain(); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     s.connect(f); f.connect(g); g.connect(sfx); s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.05);
@@ -482,11 +576,12 @@ function pickVoice(code) {
   return list.find(v => (v.lang || '').replace('_', '-') === code && /google|natural|samantha|carmit/i.test(v.name)) || list.find(v => (v.lang || '').replace('_', '-') === code) || list[0] || null;
 }
 // prio 0 = hint, 1 = normal, 2 = important (interrupts), cool = seconds before this same line may repeat
-function say(key, { prio = 1, cool = 8 } = {}) {
-  if (!settings.voice || A.muted) return;
+// text = say these exact words instead of the STRINGS line (used for the room-code picture names)
+function say(key, { prio = 1, cool = 8, text } = {}) {
+  if (!settings.voice || A.muted || netQuiet) return;
   const now = performance.now() / 1000;
   if (now - (sayCool[key] ?? -1e9) < cool) return;
-  let line = STRINGS[settings.lang].say[key] ?? STRINGS.en.say[key];
+  let line = text ?? STRINGS[settings.lang].say[key] ?? STRINGS.en.say[key];
   if (!line) return;
   if (Array.isArray(line)) line = line[Math.floor(Math.random() * line.length)];
   try {
@@ -707,6 +802,7 @@ function makeFX(max, material, shadows) {
 const litFX = makeFX(1500, new THREE.MeshStandardMaterial({ roughness: 0.4 }), true);
 const glowFX = makeFX(1500, new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }), false);
 function fx(sys, x, y, z, o) {
+  if (netQuiet) return;
   if (sys.list.length >= sys.max) sys.list.shift();
   sys.list.push({
     x, y, z, vx: o.vx || 0, vy: o.vy || 0, vz: o.vz || 0, life: o.life || 1, max: o.life || 1,
@@ -749,6 +845,7 @@ function smoke(p, n = 10, size = 0.8, color = '#ffffff') {
 }
 const rings = [];
 function ring(p, maxR, color = '#ffffff', life = 0.5) {
+  if (netQuiet) return;
   const m = new THREE.Mesh(G.ring, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .85, side: THREE.DoubleSide, depthWrite: false }));
   m.rotation.x = -Math.PI / 2; m.position.set(p.x, p.y + 0.2, p.z); scene.add(m); rings.push({ m, maxR, life, max: life });
 }
@@ -760,9 +857,10 @@ function updateRings(dt) {
   }
 }
 let shakeAmt = 0;
-const shake = a => { shakeAmt = Math.max(shakeAmt, a); };
+const shake = a => { if (!netQuiet) shakeAmt = Math.max(shakeAmt, a); };
 let activePad = null;
 function rumble(strong = 0.4, weak = 0.3, ms = 120) {
+  if (netQuiet) return;
   try { activePad?.vibrationActuator?.playEffect?.('dual-rumble', { duration: ms, strongMagnitude: strong, weakMagnitude: weak }); } catch (e) {}
   if (isTouch && !activePad) buzz(Math.min(60, ms * strong));
 }
@@ -934,6 +1032,7 @@ function addStud(type, x, y, z, o) {
   studs.push({ type, x, y, z, vx: o?.vx || 0, vy: o?.vy || 0, vz: o?.vz || 0, dynamic: !!o?.dynamic, delay: o?.delay || 0, ph: Math.random() * TAU, life: o?.dynamic ? 20 : Infinity, magnet: false, home: o?.dynamic ? null : [x, y, z] });
 }
 function burstStuds(p, counts, power = 1) {
+  if (netQuiet) return;
   counts.forEach((n, type) => {
     for (let i = 0; i < n; i++) addStud(type, p.x, p.y + 0.4, p.z, { dynamic: true, vx: rand(-5, 5) * power, vy: rand(8, 14) * Math.sqrt(power), vz: rand(-5, 5) * power, delay: 0.35 });
   });
@@ -1321,8 +1420,9 @@ function collectGold(g, remote = false) {
   const at = b ? b.mesh.position.clone() : new V3(player.pos.x, player.pos.y + 2, player.pos.z);
   SFX.gold(); confetti(at, 70, 1.2); sparkle(at, '#ffe066', 30, 10, .3); rumble(.6, .6, 300); shake(.15);
   if (!remote) player.dance = 1.6;
-  const gp = $('goldpop'); gp.classList.remove('show'); void gp.offsetWidth; gp.classList.add('show');
   refreshGoldHUD();
+  if (netQuiet) { if (!remote) NET.send('gold', { id }); return; }
+  const gp = $('goldpop'); gp.classList.remove('show'); void gp.offsetWidth; gp.classList.add('show');
   if (save.gold.length >= GOLD_TOTAL) { allGoldParty = 10; const t = $('trophy'); t.classList.remove('show'); void t.offsetWidth; t.classList.add('show'); say('allGold', { prio: 2, cool: 0 }); }
   else say('gold', { prio: 2, cool: 0 });
   if (!remote) NET.send('gold', { id });
@@ -1509,6 +1609,7 @@ const player = {
   pos: new V3(0, 0, 18), vel: new V3(), yaw: Math.PI, hero: save.heroes.includes(0) ? 0 : save.heroes[0],
   onGround: true, jumps: 0, airT: 0, attackT: 0, attackCd: 0, arm: 0, powerCd: 0, powerT: 0, pounding: false,
   phase: 0, building: false, swapT: 0, flying: false, flip: 0, dance: 0, figs: [],
+  punches: 0, powers: 0,   // counters friends use to show your punches / powers
   ride: null,   // something carrying the player (see startRide)
   kart: null,   // the race-car buildable while driving
   disco: false, // standing on the robot's dance floor
@@ -1645,7 +1746,7 @@ function updateWebs(dt) {
 }
 function usePower(H) {
   const p = player.pos, fx = Math.sin(player.yaw), fz = Math.cos(player.yaw);
-  player.powerT = .3;
+  player.powerT = .3; player.powers++;
   if (H.power === 'laser') {
     player.powerCd = .22; const t = aimTarget(30, .5);
     if (t) player.yaw = Math.atan2(t.pos.x - p.x, t.pos.z - p.z);
@@ -1706,7 +1807,7 @@ function movePlayer(dt, H, p, v) {
   player.attackCd -= dt; player.attackT = Math.max(0, player.attackT - dt);
   if (input.attack && player.attackCd <= 0 && !busy) {
     if (kart) { player.attackCd = .5; SFX.honk(); sparkle(new V3(p.x + Math.sin(player.yaw) * 2, p.y + 1, p.z + Math.cos(player.yaw) * 2), '#ffe066', 8, 4, .2); }
-    else { player.attackCd = .26; player.attackT = .22; player.arm ^= 1; meleeHit(); }
+    else { player.attackCd = .26; player.attackT = .22; player.arm ^= 1; player.punches++; meleeHit(); coopLocalPunch(); }
   }
   player.powerCd -= dt; player.powerT = Math.max(0, player.powerT - dt);
   if (input.power && player.powerCd <= 0 && !busy && !kart) usePower(H);
@@ -1759,6 +1860,7 @@ function animatePlayer(dt, H, p, v) {
 const keys = {};
 let usingPad = false, mouseDX = 0, mouseDY = 0, dragging = false, dragDist = 0, clickAttack = false, clickPower = false;
 addEventListener('keydown', e => {
+  if (menuKey(e)) return;   // title choices / play-together picker (see the co-op section)
   keys[e.code] = true;
   if (['Space', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
   if (e.code === 'KeyM') toggleMute();
@@ -1875,6 +1977,7 @@ function readInput() {
     if (touch.direct >= 0) { btn['d' + touch.direct] = true; touch.direct = -1; }
   }
   activePad = null;
+  const pb = {}; let pnx = 0, pny = 0;   // gamepad-only buttons and direction, for the menus
   const pads = navigator.getGamepads ? navigator.getGamepads() : [];
   for (const gp of pads) {
     if (!gp || !gp.connected) continue;
@@ -1882,7 +1985,9 @@ function readInput() {
     const dz = v => Math.abs(v) < .18 ? 0 : v, b = i => !!(gp.buttons[i] && gp.buttons[i].pressed);
     const ax = dz(gp.axes[0] || 0), ay = dz(gp.axes[1] || 0), rx = dz(gp.axes[2] || 0), ry = dz(gp.axes[3] || 0);
     const anyBtn = gp.buttons.some(x => x.pressed);
-    if (ax || ay || rx || ry || anyBtn) { activePad = gp; if (!usingPad) { usingPad = true; renderControls(); } if (anyBtn) anyInput(); }
+    if (ax || ay || rx || ry || anyBtn) { activePad = gp; if (!usingPad) { usingPad = true; renderControls(); } if (anyBtn && started && !UI.open) anyInput(); }
+    pb.a ||= b(0); pb.b ||= b(1); pb.y ||= b(3); pb.any ||= [0, 1, 2, 3, 4, 5, 6, 7].some(b);
+    pnx += ax + (b(15) ? 1 : 0) - (b(14) ? 1 : 0); pny += ay + (b(13) ? 1 : 0) - (b(12) ? 1 : 0);
     mx += ax + (b(15) ? 1 : 0) - (b(14) ? 1 : 0); my += ay + (b(13) ? 1 : 0) - (b(12) ? 1 : 0); cx += rx; cy += ry;
     btn.jump ||= b(0); btn.build ||= b(1); btn.attack ||= b(2); btn.swap ||= b(3); btn.swapPrev = btn.swapPrev || b(4);
     btn.power ||= b(5) || b(7) || b(6); btn.mute = btn.mute || b(8); btn.home ||= b(9);
@@ -1894,6 +1999,10 @@ function readInput() {
   if (edge('mute')) toggleMute();
   if (edge('home')) location.href = '../../index.html';
   prevBtn = btn;
+  if (!started || UI.open) {   // menus own the controls: the hero stands still
+    menuPad(pb, pnx, pny);
+    Object.assign(input, { mx: 0, my: 0, jump: false, jumpHeld: false, attack: false, power: false, buildHeld: false, swap: false, swapPrev: false, direct: -1 });
+  }
 }
 
 // =====================================================================
@@ -2566,12 +2675,455 @@ buildWorld();
 const portraits = player.figs.map(f => portraitURL(f.userData.faceCanvas));
 
 // =====================================================================
+//  Play together (online co-op, opt-in). Up to 12 heroes in one room.
+//  - A room code is 4 pictures (CONFIG.coopPics) -> server room 'bh-<4 digits>'. ?room=... in the URL joins directly.
+//  - Server: CONFIG.COOP_SERVER (or ?server=ws://...). Message format: server/PROTOCOL.md.
+//  - Shared: builds + gold bricks (saved in the room for late joiners), smashed props / goons / Brick Bot.
+//    Studs stay personal. Each player runs their own goons and Brick Bot; a smash is sent to everyone.
+//  - If the network fails the game just keeps going (solo). It reconnects by itself.
+// =====================================================================
+const qs = new URLSearchParams(location.search);
+const COOP_URL = (/^wss?:\/\/[^\s]+$/i.test(qs.get('server') || '') ? qs.get('server') : CONFIG.COOP_SERVER).replace(/\/+$/, '');
+const COOP = { code: null, ws: null, state: 'off', id: 0, slot: -1, tries: 0, retryT: null, everOn: false, failSaid: false,
+  last: null, tickAt: 0, sentAt: 0, pingAt: 0, recvAt: 0, pending: new Map(), lastPunch: -1e9, facesSig: '', facesAt: 0, sent: 0, got: 0 };
+const remotes = new Map();   // id -> remote player
+const slotColor = slot => CONFIG.coopColors[slot] || '#9aa0a6';
+const r2 = v => Math.round(v * 100) / 100;
+
+// ---------- room codes ----------
+function parseRoom(s) {
+  if (!s) return null;
+  s = String(s).trim().toLowerCase();
+  const m = s.match(/^(?:bh-)?([0-8]{4})$/);
+  if (m) return 'bh-' + m[1];
+  return /^[a-z0-9-]{1,24}$/.test(s) ? s : null;
+}
+const codeDigits = code => /^bh-[0-8]{4}$/.test(code || '') ? [...code.slice(3)].map(Number) : null;
+const codePics = code => codeDigits(code)?.map(d => CONFIG.coopPics[d]).join('') ?? (code || '');
+const picName = i => (STRINGS[settings.lang].emo || STRINGS.en.emo)[i];
+function sayCode(code) { const d = codeDigits(code); if (d) say('code', { prio: 2, cool: 0, text: d.map(picName).join(', ') }); }
+function coopLink(code) {
+  const u = new URL(location.href); u.search = ''; u.hash = '';
+  u.searchParams.set('room', code);
+  if (COOP_URL !== CONFIG.COOP_SERVER) u.searchParams.set('server', COOP_URL);
+  return u.toString();
+}
+function setUrlRoom(code) {
+  try { const u = new URL(location.href); if (code) u.searchParams.set('room', code); else u.searchParams.delete('room'); history.replaceState(null, '', u); } catch (e) {}
+}
+
+// ---------- friends' heroes ----------
+const coopRingGeo = new THREE.RingGeometry(.7, 1.05, 32);
+function makeRing(color) {
+  const m = new THREE.Mesh(coopRingGeo, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .9, depthWrite: false, side: THREE.DoubleSide }));
+  m.rotation.x = -Math.PI / 2; return m;
+}
+const myRing = makeRing('#ffffff'); myRing.visible = false; scene.add(myRing);
+function badgeTexture(slot, h) {   // coloured circle with the hero's face
+  const c = cv(128, 128), g = c.getContext('2d');
+  g.fillStyle = slotColor(slot); g.beginPath(); g.arc(64, 64, 62, 0, TAU); g.fill();
+  g.save(); g.beginPath(); g.arc(64, 64, 46, 0, TAU); g.clip(); g.drawImage(player.figs[h].userData.faceCanvas, 192, 0, 128, 128, 18, 18, 92, 92); g.restore();
+  g.lineWidth = 6; g.strokeStyle = '#ffffff'; g.beginPath(); g.arc(64, 64, 46, 0, TAU); g.stroke();
+  return tex(c);
+}
+function getRemote(id, slot) {
+  let r = remotes.get(id);
+  if (!r) {
+    r = { id, slot: -1, hero: -1, figs: [], root: new THREE.Group(), buf: [], pos: new V3(), yaw: 0, speed: 0, phase: 0, anim: 'g', kartId: -1, kart: null,
+      pu: null, pw: null, attackT: 0, arm: 0, powerT: 0, punchT: -1e9, hfT: -1e9, hello: false, seen: 0, dirty: true };
+    r.ring = makeRing('#ffffff');
+    r.badge = new THREE.Sprite(new THREE.SpriteMaterial({ depthWrite: false, transparent: true })); r.badge.scale.set(1.15, 1.15, 1);
+    r.root.add(r.ring, r.badge); r.root.visible = false; scene.add(r.root);
+    remotes.set(id, r); setRemoteHero(r, 0);
+  }
+  if (Number.isInteger(slot) && slot !== r.slot) { r.slot = slot; r.dirty = true; }
+  return r;
+}
+function setRemoteHero(r, h) {
+  h = clamp(Math.floor(+h) || 0, 0, HEROES.length - 1);
+  if (h === r.hero) return;
+  if (r.figs[r.hero]) r.figs[r.hero].visible = false;
+  const was = r.hero; r.hero = h; r.dirty = true;
+  if (!r.figs[h]) {
+    const f = makeMinifig(HEROES[h]); f.traverse(o => { if (o.isMesh) o.castShadow = false; });   // the coloured ring is their shadow: cheaper
+    r.figs[h] = f; r.root.add(f);
+  }
+  r.figs[h].visible = true;
+  if (was >= 0 && r.root.visible) { const c = new V3(r.pos.x, r.pos.y + 1.2, r.pos.z); smoke(c, 8, .7, HEROES[h].color); sparkle(c, '#ffffff', 8, 5); }
+}
+function removeRemote(id) {
+  const r = remotes.get(id); if (!r) return;
+  scene.remove(r.root); if (r.kart) scene.remove(r.kart);
+  r.root.traverse(o => { if (!o.material) return; for (const m of [].concat(o.material)) if (m.map) { m.map.dispose(); m.dispose(); } });
+  r.ring.material.dispose();
+  remotes.delete(id);
+}
+function clearRemotes() { for (const id of [...remotes.keys()]) removeRemote(id); }
+// a state message ('s') from a friend: { p:[x,y,z], r: yaw, a: animation, h: hero, c: slot, u: punches, w: powers, k: race-car id }
+function onState(r, m, now) {
+  if (!m || !Array.isArray(m.p) || m.p.length < 3) return;
+  const s = { t: now, x: +m.p[0] || 0, y: +m.p[1] || 0, z: +m.p[2] || 0, r: +m.r || 0, a: typeof m.a === 'string' ? m.a : 'g', k: Number.isInteger(m.k) ? m.k : -1 };
+  const b = r.buf, last = b[b.length - 1];
+  if (!last || Math.hypot(s.x - last.x, s.z - last.z) > 30) b.length = 0;   // first time or a big jump: no sliding across the map
+  else if (now - last.t > 180) b.push(Object.assign({}, last, { t: now - 100 }));   // after standing still: start moving from here, not from long ago
+  b.push(s); if (b.length > 12) b.splice(0, b.length - 12);
+  if (!r.root.visible) { r.root.visible = true; r.pos.set(s.x, s.y, s.z); r.yaw = s.r; r.dirty = true; }
+  if (m.h !== undefined) setRemoteHero(r, m.h);
+  if (Number.isInteger(m.c) && m.c !== r.slot) { r.slot = m.c; r.dirty = true; }
+  if (m.u !== undefined) { if (r.pu !== null && m.u !== r.pu) remotePunch(r, now); r.pu = m.u; }
+  if (m.w !== undefined) { if (r.pw !== null && m.w !== r.pw) r.powerT = .3; r.pw = m.w; }
+  r.seen = now;
+}
+function remotePunch(r, now) {
+  r.attackT = .22; r.arm ^= 1; r.punchT = now;
+  if (now - COOP.lastPunch < 650 && remoteNear(r, 3.6)) highFive(r);
+}
+const remoteNear = (r, d) => r.root.visible && Math.hypot(r.pos.x - player.pos.x, r.pos.y - player.pos.y, r.pos.z - player.pos.z) < d;
+function coopLocalPunch() {
+  const now = performance.now(); COOP.lastPunch = now;
+  for (const r of remotes.values()) if (now - r.punchT < 650 && remoteNear(r, 3.6)) highFive(r);
+}
+// two friends punch next to each other at the same time: high five!
+function highFive(r) {
+  const now = performance.now(); if (now - r.hfT < 900) return; r.hfT = now;
+  const c = new V3((r.pos.x + player.pos.x) / 2, Math.max(r.pos.y, player.pos.y) + 2.4, (r.pos.z + player.pos.z) / 2);
+  sparkle(c, '#ffe066', 26, 7, .26); sparkle(c, slotColor(r.slot), 14, 5, .2); confetti(c, 24, .7); ring(new V3(c.x, Math.min(r.pos.y, player.pos.y), c.z), 3, '#ffe066', .4);
+  A.noise(.09, .4, 2500, 0, 'bandpass'); A.tone(1050, .18, 'triangle', .12, 1700, .03); rumble(.4, .4, 120);
+  say('hiFive', { cool: 12 });
+}
+function updateRemote(r, now, dt) {
+  const b = r.buf; if (!b.length || !r.root.visible) return;
+  if (now - r.seen > 12000) { r.root.visible = false; if (r.kart) r.kart.visible = false; b.length = 0; return; }   // silent for a long time: hide until they move again
+  const rt = now - CONFIG.coopDelay;
+  while (b.length >= 2 && b[1].t <= rt) b.shift();
+  const A0 = b[0], B0 = b[1];
+  let x = A0.x, y = A0.y, z = A0.z, yaw = A0.r;
+  if (B0 && rt > A0.t) { const k = (rt - A0.t) / (B0.t - A0.t); x = lerp(A0.x, B0.x, k); y = lerp(A0.y, B0.y, k); z = lerp(A0.z, B0.z, k); yaw = angLerp(A0.r, B0.r, k); }
+  const hs = dt > 0 ? Math.hypot(x - r.pos.x, z - r.pos.z) / dt : 0;
+  r.speed = lerp(r.speed, Math.min(hs, 30), 1 - Math.exp(-10 * dt));
+  r.pos.set(x, y, z); r.yaw = angLerp(r.yaw, yaw, 1 - Math.exp(-18 * dt));
+  const H = HEROES[r.hero], a = A0.a, fig = r.figs[r.hero];
+  r.phase += r.speed * dt * 1.4 / H.scale;
+  r.attackT = Math.max(0, r.attackT - dt); r.powerT = Math.max(0, r.powerT - dt);
+  if (r.dirty) {
+    r.dirty = false; r.ring.material.color.set(slotColor(r.slot)); r.ring.scale.setScalar(H.scale);
+    r.badge.material.map?.dispose(); r.badge.material.map = badgeTexture(r.slot, r.hero); r.badge.material.needsUpdate = true;
+  }
+  // a friend driving the race car: show a copy of the car under them (if it is built here too)
+  const kb = a === 'k' ? buildables[A0.k] : null, car = kb && kb.built && kb.parts.kart;
+  if (car && (!r.kart || r.kartId !== A0.k)) { if (r.kart) scene.remove(r.kart); r.kart = car.clone(); r.kartId = A0.k; scene.add(r.kart); }
+  if (r.kart) { r.kart.visible = !!car; if (car) { r.kart.position.set(x, y, z); r.kart.rotation.y = r.yaw; } }
+  r.root.position.set(x, y, z);
+  fig.rotation.y = r.yaw;
+  fig.position.set(car ? -Math.sin(r.yaw) * .3 : 0, 0, car ? -Math.cos(r.yaw) * .3 : 0);
+  poseFig(fig, { walk: a === 'g' ? Math.min(1, r.speed / 6) : 0, phase: r.phase, air: a === 'j', fly: a === 'f', sit: a === 's' || a === 'k', cheer: a === 'c',
+    build: a === 'b', dance: a === 'd', attack: r.attackT / .22, arm: r.arm, power: r.powerT, t: time });
+  r.badge.position.y = H.h + .85 + Math.sin(time * 3 + r.id) * .12;
+  r.ring.position.y = .06;
+}
+
+// ---------- connection ----------
+function coopSend(o) {
+  const ws = COOP.ws; if (!ws || ws.readyState !== 1) return false;
+  try { ws.send(typeof o === 'string' ? o : JSON.stringify(o)); COOP.sent++; return true; } catch (e) { return false; }
+}
+function coopJoin(code) {
+  code = parseRoom(code); if (!code) return false;
+  if (code === COOP.code && COOP.state !== 'off') return true;
+  coopLeave();
+  COOP.code = code; COOP.tries = 0; COOP.failSaid = false; COOP.everOn = false; COOP.pending.clear();
+  setUrlRoom(code); coopConnect(); refreshCoopHUD(); return true;
+}
+function coopLeave() {
+  clearTimeout(COOP.retryT); COOP.retryT = null;
+  dropSocket();
+  COOP.code = null; COOP.state = 'off'; COOP.slot = -1; COOP.pending.clear();
+  setUrlRoom(null); refreshCoopHUD();
+}
+function dropSocket() {
+  const ws = COOP.ws; COOP.ws = null;
+  if (ws) { ws.onopen = ws.onmessage = ws.onclose = ws.onerror = null; try { ws.close(1000); } catch (e) {} }
+  clearRemotes();
+}
+function coopConnect() {
+  clearTimeout(COOP.retryT); COOP.retryT = null;
+  if (!COOP.code) return;
+  dropSocket();
+  COOP.state = 'connecting'; refreshCoopHUD();
+  let ws;
+  try { ws = new WebSocket(COOP_URL + '/room/' + COOP.code); } catch (e) { console.warn('Play together: cannot open', e.message); coopRetry(); return; }
+  COOP.ws = ws; COOP.recvAt = performance.now();
+  ws.onmessage = e => {
+    if (COOP.ws !== ws) return;
+    COOP.recvAt = performance.now(); COOP.got++;
+    let m; try { m = JSON.parse(e.data); } catch (er) { return; }
+    try { coopMessage(m); } catch (er) { console.warn('Play together: bad message', er); }
+  };
+  ws.onerror = () => {};   // a close always follows
+  ws.onclose = e => {
+    if (COOP.ws !== ws) return;
+    COOP.ws = null; clearRemotes();
+    if (e.code === 1013 && COOP.state !== 'on') { coopMessage({ t: 'full' }); return; }   // room full (in case the 'full' message got lost)
+    if (COOP.code && COOP.state !== 'full') coopRetry();
+  };
+}
+function coopRetry() {   // try again later: 1 s, 2 s, 4 s ... up to 30 s
+  if (!COOP.code) return;
+  COOP.state = 'retry'; COOP.tries++;
+  if (COOP.tries >= 2 && !COOP.failSaid) { COOP.failSaid = true; coopToast('📶❌'); say('coopFail', { prio: 2, cool: 20 }); }
+  if (COOP.tries === 2) console.warn('Play together: cannot reach ' + COOP_URL + ' (still trying; the game works alone meanwhile)');
+  const wait = Math.min(30000, 1000 * 2 ** Math.min(COOP.tries - 1, 5)) * rand(.8, 1.2);
+  COOP.retryT = setTimeout(coopConnect, wait);
+  refreshCoopHUD();
+}
+addEventListener('online', () => { if (COOP.state === 'retry') coopConnect(); });
+function coopMessage(m) {
+  const now = performance.now();
+  switch (m.t) {
+    case 'welcome': {
+      COOP.id = m.id; COOP.slot = m.slot; COOP.state = 'on'; COOP.tries = 0; COOP.failSaid = false; COOP.last = null;
+      myRing.material.color.set(slotColor(m.slot));
+      coopSend({ t: 'hello', name: '', hero: String(player.hero) });
+      clearRemotes();
+      for (const p of m.peers || []) {
+        const r = getRemote(p.id, p.slot); r.hello = !!p.hero;
+        if (p.hero !== '' && p.hero !== undefined) setRemoteHero(r, p.hero);
+        if (p.state) onState(r, p.state, now);
+      }
+      applyWorld(m.world || {});
+      for (const msg of COOP.pending.values()) coopSend(msg);   // builds / gold from while we were offline
+      COOP.pending.clear();
+      if (!COOP.everOn) { coopToast('👫✅'); say('coopJoined', { prio: 2, cool: 0 }); }
+      COOP.everOn = true; refreshCoopHUD();
+      break;
+    }
+    case 'join': {
+      const r = getRemote(m.id, m.slot);
+      if (m.hero !== '' && m.hero !== undefined) setRemoteHero(r, m.hero);
+      if (!r.hello) { r.hello = true; coopToast(`<img src="${portraits[Math.max(0, r.hero)]}" style="border-color:${slotColor(r.slot)}">👋`); say('coopFriend', { prio: 2, cool: 4 }); }
+      COOP.last = null;   // send our state right away so the newcomer sees us
+      refreshCoopHUD();
+      break;
+    }
+    case 's': if (m.from !== COOP.id && Number.isInteger(m.from)) onState(getRemote(m.from), m, now); break;
+    case 'ev': coopEvent(m); break;
+    case 'leave': {
+      const r = remotes.get(m.id); if (!r) break;
+      if (r.root.visible) { const c = new V3(r.pos.x, r.pos.y + 1.2, r.pos.z); smoke(c, 12, .8, slotColor(r.slot)); sparkle(c, '#ffffff', 12, 5); }
+      coopToast(`<img src="${portraits[Math.max(0, r.hero)]}" style="border-color:${slotColor(r.slot)}">👋`, 'bye'); say('coopBye', { prio: 2, cool: 4 });
+      removeRemote(m.id); refreshCoopHUD();
+      break;
+    }
+    case 'full': COOP.state = 'full'; coopToast('👫🚪✋'); say('coopFull', { prio: 2, cool: 0 }); coopLeave(); break;
+  }
+}
+// ---------- shared world ----------
+// local events come in through NET.send (the hooks in completeBuild / smashTarget / collectGold)
+NET.send = (type, data) => {
+  let msg;
+  if (type === 'build') msg = { t: 'ev', k: 'b', id: data.id, persist: true, key: 'b:' + data.id, value: 1 };
+  else if (type === 'gold') msg = { t: 'ev', k: 'g', id: data.id, persist: true, key: 'g:' + data.id, value: 1 };
+  else if (type === 'smash') msg = { t: 'ev', k: 'x', o: data.kind[0], id: data.id };
+  if (!msg || !COOP.code) return;
+  if (!coopSend(msg) && msg.persist) COOP.pending.set(msg.key, msg);   // offline for a moment: send after reconnecting
+};
+function quietly(q, fn) { const was = netQuiet; netQuiet = was || q; try { fn(); } catch (e) { console.warn('Play together:', e); } finally { netQuiet = was; } }
+const nearMe = (x, z) => Math.hypot(x - player.pos.x, z - player.pos.z) < 45;
+function coopEvent(m) {
+  if (m.k === 'b') {   // a friend finished a build
+    const b = buildables[m.id];
+    if (b && !b.built) quietly(!started || !nearMe(b.x, b.z), () => completeBuild(b, true));
+  } else if (m.k === 'g') {   // a friend found a gold brick: it counts for the whole team, and everybody celebrates
+    if (typeof m.id === 'string' && m.id.length < 40) quietly(!started, () => collectGold(m.id, true));
+  } else if (m.k === 'x') {   // a friend smashed a prop / goon / the Brick Bot
+    const t = Number.isInteger(m.id) ? findTarget({ p: 'prop', g: 'goon', b: 'boss' }[m.o], m.id) : null;
+    if (t && t.alive) quietly(!started || !nearMe(t.pos.x, t.pos.z), () => smashTarget(t, null, true));
+  }
+}
+function applyWorld(world) {   // late joiner: everything built / found so far appears at once, quietly
+  for (const key in world) {
+    const id = key.slice(2);
+    if (key.startsWith('b:')) { const b = buildables[+id]; if (b && !b.built) quietly(true, () => completeBuild(b, true)); }
+    else if (key.startsWith('g:')) quietly(true, () => collectGold(id, true));
+  }
+}
+function localState() {
+  const p = player.pos, hs = Math.hypot(player.vel.x, player.vel.z), rp = player.ride?.pose;
+  const a = player.kart ? 'k' : player.ride ? (rp === 'sit' ? 's' : rp === 'fly' ? 'f' : 'c') : player.building ? 'b' : player.flying ? 'f'
+    : (player.dance > 0 || (player.disco && hs < 1.5)) ? 'd' : !player.onGround ? 'j' : 'g';
+  const s = { t: 's', p: [r2(p.x), r2(p.y), r2(p.z)], r: r2(((player.yaw % TAU) + TAU) % TAU), a, h: player.hero, c: COOP.slot, u: player.punches % 100, w: player.powers % 100 };
+  if (player.kart) s.k = player.kart.id;
+  return s;
+}
+function stateChanged(s, o) {
+  if (!o) return true;
+  return Math.abs(s.p[0] - o.p[0]) + Math.abs(s.p[1] - o.p[1]) + Math.abs(s.p[2] - o.p[2]) > .03 || Math.abs(s.r - o.r) > .03
+    || s.a !== o.a || s.h !== o.h || s.u !== o.u || s.w !== o.w || s.k !== o.k;
+}
+function coopUpdate(now, dt) {
+  if (COOP.state === 'on' && COOP.ws) {
+    if (now - COOP.tickAt >= 1000 / CONFIG.coopSendHz - 4) {
+      COOP.tickAt = now;
+      const s = localState();
+      if (stateChanged(s, COOP.last) || now - COOP.sentAt > 1000) { if (coopSend(s)) { COOP.last = s; COOP.sentAt = now; } }
+    }
+    if (now - COOP.pingAt > 20000) { COOP.pingAt = now; coopSend('{"t":"ping"}'); }
+    if (now - COOP.recvAt > 50000) { dropSocket(); coopRetry(); }   // nothing heard (not even a pong): reconnect
+  }
+  for (const r of remotes.values()) updateRemote(r, now, dt);
+  myRing.visible = COOP.state === 'on' && started;
+  if (myRing.visible) { myRing.position.set(player.pos.x, player.pos.y + .06, player.pos.z); myRing.scale.setScalar(hero().scale); }
+  if (now - COOP.facesAt > 400) {   // faces row in the HUD: me + friends, in their colours
+    COOP.facesAt = now;
+    const list = COOP.state === 'on' ? [{ slot: COOP.slot, hero: player.hero, me: 1 }, ...[...remotes.values()].filter(r => r.root.visible || r.hello)] : [];
+    const sig = list.map(r => r.slot + ':' + r.hero).join();
+    if (sig !== COOP.facesSig) {
+      COOP.facesSig = sig;
+      $('coopfaces').innerHTML = list.map(r => `<img class="${r.me ? 'me' : ''}" src="${portraits[Math.max(0, r.hero)]}" style="border-color:${slotColor(r.slot)}">`).join('');
+    }
+  }
+}
+
+// ---------- HUD bits ----------
+function refreshCoopHUD() {
+  const on = !!COOP.code;
+  $('coopbar').classList.toggle('show', on);
+  $('coop').classList.toggle('on', on);
+  $('coopcode').textContent = codePics(COOP.code);
+  $('tcode').textContent = on ? codePics(COOP.code) : '';
+  $('coopnet').className = 'emo ' + (COOP.state === 'on' ? 'on' : COOP.state === 'retry' && COOP.tries >= 2 ? 'bad' : 'wait');
+}
+function coopToast(html, cls = '') { const t = $('cooptoast'); t.innerHTML = html; t.className = 'emo'; void t.offsetWidth; t.className = 'emo show ' + cls; }
+async function copyLink(btn, code) {
+  if (!code) { SFX.bonk(); return; }
+  const link = coopLink(code); let ok = false;
+  try { await navigator.clipboard.writeText(link); ok = true; } catch (e) {}
+  if (!ok) try { const ta = document.createElement('textarea'); ta.value = link; document.body.append(ta); ta.select(); ok = document.execCommand('copy'); ta.remove(); } catch (e) {}
+  btn.title = link; btn.textContent = ok ? '✅' : '🔗'; SFX.pop();
+  setTimeout(() => { btn.textContent = '🔗'; }, 1600);
+}
+$('coop').addEventListener('click', e => { e.stopPropagation(); A.init(); openPicker(); });
+$('coopcode').addEventListener('click', e => { e.stopPropagation(); sayCode(COOP.code); const el = $('coopcode'); el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); });
+$('cooplink').addEventListener('click', e => { e.stopPropagation(); copyLink($('cooplink'), COOP.code); });
+$('coopnet').addEventListener('click', e => { e.stopPropagation(); if (COOP.state === 'retry') coopConnect(); });
+
+// ---------- title choices + the picture picker (works with gamepad, keyboard, mouse and touch) ----------
+const UI = { open: false, pick: [], focus: null, navKey: '', navNext: 0, prevPad: {} };
+$('cgrid').innerHTML = CONFIG.coopPics.map((e, i) => `<button class="nav ce" data-i="${i}">${e}</button>`).join('');
+for (const el of $('cgrid').children) el.addEventListener('click', () => pickPic(+el.dataset.i));
+$('crand').addEventListener('click', randomCode);
+$('cback').addEventListener('click', erasePic);
+$('ccopy').addEventListener('click', () => copyLink($('ccopy'), UI.pick.length === 4 ? 'bh-' + UI.pick.join('') : null));
+$('cgo').addEventListener('click', goTogether);
+$('csolo').addEventListener('click', () => { coopLeave(); closePicker(); });
+$('cclose').addEventListener('click', closePicker);
+$('tcoop').addEventListener('click', e => { e.stopPropagation(); A.init(); openPicker(); });
+function setFocus(el) {
+  for (const e of document.querySelectorAll('.nav.focus')) e.classList.remove('focus');
+  UI.focus = el || null; if (el) el.classList.add('focus');
+}
+function navItems() { return [...(UI.open ? $('coopui') : $('title')).querySelectorAll('.nav')].filter(e => e.offsetParent !== null && !e.disabled); }
+function navMove(dx, dy) {
+  const items = navItems(); if (!items.length) return;
+  if (!UI.open) $('title').classList.add('navving');
+  const cur = items.includes(UI.focus) ? UI.focus : null;
+  if (!cur) { setFocus(items[0]); return; }
+  const rc = el => { const b = el.getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + b.height / 2 }; };
+  const c = rc(cur); let best = null, bs = 1e9;
+  for (const el of items) {
+    if (el === cur) continue;
+    const q = rc(el), ex = q.x - c.x, ey = q.y - c.y, along = ex * dx + ey * dy;
+    if (along <= 4) continue;
+    const sc = along + (Math.abs(ex * dy) + Math.abs(ey * dx)) * 2.5;
+    if (sc < bs) { bs = sc; best = el; }
+  }
+  if (best) { setFocus(best); SFX.click(); }
+}
+function navCycle() { const items = navItems(); if (!items.length) return; $('title').classList.add('navving'); setFocus(items[(items.indexOf(UI.focus) + 1) % items.length]); SFX.click(); }
+function navActivate() { (UI.focus && navItems().includes(UI.focus) ? UI.focus : UI.open ? null : $('tsolo'))?.click(); }
+function openPicker() {
+  if (UI.open) return;
+  UI.open = true; for (const k in keys) keys[k] = false; touch.btn = {};
+  UI.pick = codeDigits(COOP.code) || [];
+  $('coopui').classList.add('show'); renderPicker();
+  setFocus(UI.pick.length === 4 ? $('cgo') : $('cgrid').children[0]);
+  say('coopPick', { prio: 2, cool: 4 });
+}
+function closePicker() {
+  if (!UI.open) return;
+  UI.open = false; $('coopui').classList.remove('show');
+  setFocus(started ? null : $('tcoop'));
+  prevBtn = { jump: true, attack: true, power: true, build: true, swap: true, swapPrev: true, mute: true };   // the button that closed it doesn't also jump
+}
+function renderPicker() {
+  [...$('cslots').children].forEach((el, i) => { const d = UI.pick[i]; el.textContent = d === undefined ? '' : CONFIG.coopPics[d]; el.classList.toggle('full', d !== undefined); });
+  const ready = UI.pick.length === 4;
+  $('cgo').classList.toggle('ready', ready); $('ccopy').disabled = !ready; $('csolo').hidden = !COOP.code;
+}
+function pickPic(i) {
+  if (UI.pick.length >= 4) { SFX.bonk(); setFocus($('cgo')); return; }
+  UI.pick.push(i); SFX.click();
+  say('pic', { prio: 2, cool: 0, text: picName(i) });
+  renderPicker();
+  if (UI.pick.length === 4) { setFocus($('cgo')); SFX.built(); }
+}
+function erasePic() { if (UI.pick.length) { UI.pick.pop(); SFX.pop(); renderPicker(); } else SFX.bonk(); }
+function randomCode() {
+  UI.pick = Array.from({ length: 4 }, () => Math.floor(Math.random() * CONFIG.coopPics.length));
+  SFX.swap(); renderPicker(); setFocus($('cgo')); sayCode('bh-' + UI.pick.join(''));
+}
+function goTogether() {
+  if (UI.pick.length < 4) { SFX.bonk(); const s = $('cslots'); s.classList.remove('shake'); void s.offsetWidth; s.classList.add('shake'); return; }
+  coopJoin('bh-' + UI.pick.join(''));
+  closePicker(); SFX.token();
+  if (!started) { if (isTouch) goFullscreen(); anyInput(); }
+}
+// keyboard: returns true when a menu used the key
+function menuKey(e) {
+  const c = e.code;
+  if (UI.open) {
+    A.init();
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Tab', 'Backspace'].includes(c)) e.preventDefault();
+    const dir = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], KeyW: [0, -1], KeyS: [0, 1], KeyA: [-1, 0], KeyD: [1, 0] }[c];
+    if (dir) navMove(dir[0], dir[1]);
+    else if (c === 'Tab') navCycle();
+    else if ((c === 'Enter' || c === 'NumpadEnter' || c === 'Space') && !e.repeat) navActivate();
+    else if (c === 'Backspace' || c === 'Delete') erasePic();
+    else if (c === 'Escape') closePicker();
+    else if (/^(Digit|Numpad)[1-9]$/.test(c)) pickPic(+c.slice(-1) - 1);
+    else if (c === 'KeyM') toggleMute(); else if (c === 'KeyV' && !e.repeat) toggleVoice(); else if (c === 'KeyL' && !e.repeat) toggleLang();
+    return true;
+  }
+  if (c === 'KeyP' && !e.repeat) { A.init(); openPicker(); return true; }
+  if (!started) {
+    if (c === 'ArrowLeft' || c === 'ArrowRight') { e.preventDefault(); A.init(); navMove(c === 'ArrowLeft' ? -1 : 1, 0); return true; }
+    if (c === 'Tab') { e.preventDefault(); A.init(); navCycle(); return true; }
+    if ((c === 'Enter' || c === 'Space') && UI.focus === $('tcoop')) { e.preventDefault(); A.init(); openPicker(); return true; }
+  }
+  return false;   // everything else: as before (any key starts the game alone)
+}
+// gamepad in menus: stick / D-pad moves, A picks, B erases (or closes), Y = dice. On the title any button = the chosen choice (alone by default).
+function menuPad(pb, nx, ny) {
+  const now = performance.now();
+  const dir = Math.max(Math.abs(nx), Math.abs(ny)) > .5 ? (Math.abs(nx) > Math.abs(ny) ? [Math.sign(nx), 0] : [0, Math.sign(ny)]) : null;
+  const key = dir ? dir.join() : '';
+  if (dir && (key !== UI.navKey || now > UI.navNext)) { UI.navNext = now + (key !== UI.navKey ? 380 : 170); navMove(dir[0], dir[1]); }
+  UI.navKey = key;
+  const e = k => pb[k] && !UI.prevPad[k];
+  if (UI.open) { if (e('a')) navActivate(); else if (e('b')) (UI.pick.length ? erasePic() : closePicker()); else if (e('y')) randomCode(); }
+  else if (!started && e('any')) navActivate();
+  UI.prevPad = pb;
+}
+setFocus($('tsolo'));
+{ const room = parseRoom(qs.get('room')); if (room) coopJoin(room); }   // a shared link: join right away
+
+// =====================================================================
 //  Main loop
 // =====================================================================
 let started = false, time = 0, last = performance.now(), persistT = 0, timeScale = 1;   // timeScale: slow-motion / fast-forward (testing)
 function anyInput() {
   A.init();
-  if (started) return;
+  if (started || UI.open) return;
   started = true;
   $('title').classList.add('hide'); $('hud').classList.add('show');
   refreshGoldHUD(); refreshHeroHUD(); renderControls();
@@ -2600,6 +3152,7 @@ function loop(now) {
     sun.position.set(30, 60, 20); sun.target.position.set(0, 0, 0);
     updateStuds(dt); updateGold(dt); updateTokens(dt); updateBuildables(dt); updateFX(litFX, dt); updateFX(glowFX, dt);
     updatePlayer(0.0001);
+    coopUpdate(now, dt);
     renderer.render(scene, camera); return;
   }
   readInput();
@@ -2614,6 +3167,7 @@ function loop(now) {
   updateGold(dt); updateTokens(dt);
   updateFX(litFX, dt); updateFX(glowFX, dt); updateRings(dt);
   updateCamera(dt); updateGuide();
+  coopUpdate(now, dt);
   updateHUD(dt); updateTouchHUD(); governFPS(now); maybeHint();
   persistT -= dt; if (persistT <= 0 && saveDirty) { persist(); persistT = 2; }
   renderer.render(scene, camera);
@@ -2621,6 +3175,7 @@ function loop(now) {
 requestAnimationFrame(loop);
 // handy for debugging in the console (and for the multiplayer layer)
 window.__game = { renderer, scene, camera, player, buildables, smashables, goons, goldBricks, save, boss, studs, targets, settings, sayLog, NET,
+  coop: COOP, remotes, UI, coopJoin, coopLeave, openPicker,
   completeBuild, smashTarget, collectGold, findTarget, toggleVoice, toggleLang, say,
   tp(x, z, y = 0) { player.ride = null; player.kart = null; player.pos.set(x, y, z); player.vel.set(0, 0, 0); camLook.set(x, y + 2, z); },
   buildAll() { buildables.forEach(b => completeBuild(b)); }, set speed(v) { timeScale = v; }, get speed() { return timeScale; } };

@@ -35,6 +35,30 @@ A friendly voice talks about what is happening (turn it off with 🗣️). The g
 
 Heroes: red flyer (flight and lasers), shield captain (boomerang shield), big green smasher (ground pound) and web hero (web zip, triple jump). The last two are unlocked by finding their glowing tokens.
 
+## 👫 Play together (online co-op)
+
+Up to 12 heroes can play in the same city (4–8 works best). Playing alone is still the default.
+
+**How kids join (no reading needed):**
+1. On the title screen, pick the big purple **👫** button: tap it, click it, press → then Enter, or push the stick right and press A. In the game, the 👫 button in the top-right corner (or the P key) does the same.
+2. Pick **4 pictures** from 🍎🐶🚗⭐🐟🌈🍕🚀🐱. That is the room code. Everyone who picks the same 4 pictures plays together. 🎲 makes a random code, ⬅️ removes the last picture, ✅ joins, ❌ closes, 👤 goes back to playing alone.
+   Gamepad: stick or D-pad to move, A to pick, B to remove a picture, Y for 🎲. Keyboard: arrow keys + Enter, Backspace to remove, 1–9 to pick a picture straight away, Esc to close.
+3. While you are connected, the code stays big at the top of the screen, so a teacher can say "apple, dog, car, star". Tap it to hear the code read out loud.
+   The 🔗 button copies a link (`...?room=bh-0123`). Opening that link joins the room right away.
+
+**What is shared:** where everyone is and what they are doing (running, jumping, punching, flying, building, riding; a friend in the race car drives a copy of the car), every build, every gold brick (when anyone finds one it counts for the whole team and everybody celebrates), and smashed props, goons and the Brick Bot. Studs stay personal. Builds and gold bricks are remembered by the room, so a friend who joins later sees the same city. Each friend has a coloured ring under their feet and a floating badge with their hero's face in the same colour. Punch right next to a friend at the same time for a high five ✋.
+
+**If the internet is bad:** the game never waits for the network. The 📶 icon at the top blinks while connecting and gets a ❌ when the server can't be reached; the game keeps trying (1 s, 2 s, 4 s ... up to 30 s) and you just keep playing. If a room is full (12 players), you see 👫🚪✋, hear "pick other pictures", and keep playing alone.
+
+**The server:** a tiny Cloudflare Worker in [`server/`](../../server/) (setup in `server/README.md`, messages in `server/PROTOCOL.md`). The address is `COOP_SERVER` in the `CONFIG` object near the top of `index.html`:
+```js
+COOP_SERVER: 'wss://brick-heroes-coop.7seans.workers.dev',
+```
+For testing you can point a page at another server with `?server=`, for example `index.html?server=ws://127.0.0.1:8787&room=bh-0123` while `npx wrangler dev --port 8787` runs in `server/`.
+A room code `bh-0123` means 🍎🐶🚗⭐ (the digits are positions in `CONFIG.coopPics`). `?room=` also accepts any server room name made of `a-z 0-9 -`.
+
+**Network use (fits the Cloudflare free plan):** a player sends about 10 tiny messages per second while moving and 1 per second while standing still, plus a ping every 20 s. Builds, gold and smashes are one message each.
+
 ---
 
 ## For AI agents: how to install and run this
@@ -69,7 +93,7 @@ This section is written for an AI coding assistant (Claude Code, Copilot, Cursor
 - The title screen shows "BRICK HEROES" over an orbiting view of the city. After you click, the HUD appears (stud counter top-left, gold brick slots top-right, hero portraits bottom-center).
 - The browser console should show no errors. If it reports failed module imports, the machine can't reach `cdn.jsdelivr.net`.
 - For debugging, game state is exposed at `window.__game` (`player`, `buildables`, `smashables`, `goons`, `goldBricks`, `save`, `boss`, `studs`, `targets`, plus helpers like `tp(x, z)`, `buildAll()` and `speed`).
-- Multiplayer hooks: world events go through `completeBuild(b, remote)`, `smashTarget(t, dir, remote)` and `collectGold(g, remote)`; local events call `NET.send(type, data)`. Buildables, smashables and goons have stable `id`s (creation order), gold bricks have string ids.
+- Multiplayer hooks: world events go through `completeBuild(b, remote)`, `smashTarget(t, dir, remote)` and `collectGold(g, remote)`; local events call `NET.send(type, data)`. Buildables, smashables and goons have stable `id`s (creation order), gold bricks have string ids. The "Play together" section of the script turns these into `ev` messages (`b`, `g` persisted as `b:<id>` / `g:<id>`, smashes as `x`). `window.__game.coop` shows the connection state and `__game.remotes` the friends' heroes.
 
 ### Common tasks
 - **Reset progress:** click "Reset progress" on the title screen, or run `localStorage.removeItem('brick-heroes-v1')` in the console.
