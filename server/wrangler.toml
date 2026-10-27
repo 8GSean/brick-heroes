@@ -1,0 +1,21 @@
+# Brick Heroes co-op relay server (Cloudflare Worker + Durable Object).
+# Deploy with:  npm install && npx wrangler deploy
+name = "brick-heroes-coop"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+# One Durable Object instance per room code.
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Room"
+
+# SQLite-backed Durable Objects work on the Workers FREE plan.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]
+
+[vars]
+# Optional: comma-separated list of web pages allowed to connect.
+# Empty = allow any origin. Example to lock it to the GitHub Pages site:
+# ALLOWED_ORIGINS = "https://8gsean.github.io"
+ALLOWED_ORIGINS = ""
