@@ -156,7 +156,7 @@ const CONFIG = {
     rex:     { name: 'T-Rex',   speed: 9,   jump: 11, radius: 1.3, height: 3.6, color: '#4caf50', belly: '#ffe082', camDist: 13 },
     ptero:   { name: 'Ptero',   speed: 10,  jump: 9,  radius: 1.0, height: 2.6, color: '#ff8a3d', belly: '#ffd8a8', camDist: 13,
                flap: 9.5, lift: 7, glideFall: 4.5, maxFly: 28 },
-    brachio: { name: 'Longneck', speed: 7.5, jump: 8, radius: 1.5, height: 4.2, color: '#4fb3e8', belly: '#e1f5fe', camDist: 16 },
+    brachio: { name: 'Longneck', speed: 7.5, jump: 8, radius: 1.5, height: 4.2, color: '#4fb3e8', belly: '#e1f5fe', camDist: 17 },
   },
   stompRadius: 7,      // T-Rex stomp reach
   neckReach: 7.5,      // Longneck reach to tree nests
@@ -381,6 +381,7 @@ const GEO = {
   cone8: new THREE.ConeGeometry(0.5, 1, 8),
   ico: new THREE.IcosahedronGeometry(0.5, 0),
   sph: new THREE.IcosahedronGeometry(0.5, 2),
+  sphLo: new THREE.IcosahedronGeometry(0.5, 1),
   stud: new THREE.CylinderGeometry(0.3, 0.3, 0.2, 10),
 };
 const VC = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.4 });
@@ -699,7 +700,7 @@ function animateDino(d, dt, o) {
     const g = Math.sin(ph) * 0.45 * w;
     d.legs[0].rotation.x = g; d.legs[3].rotation.x = g; d.legs[1].rotation.x = -g; d.legs[2].rotation.x = -g;
     st.stretch += ((st.stretchT > 0 ? 1 : 0) - st.stretch) * (1 - Math.exp(-6 * dt)); st.stretchT -= dt;
-    const s = st.stretch, k = 1 + 0.35 * s, tilt = lerp(0.55, 0.12, s) - roar * 0.25 + (o.dance ? Math.sin(t * 6) * 0.25 : 0);
+    const s = st.stretch, k = 1 + 0.35 * s, tilt = lerp(0.8, 0.12, s) - roar * 0.25 + (o.dance ? Math.sin(t * 6) * 0.25 : 0);
     let sum = 0;
     d.neck.forEach((n, i) => {
       n.rotation.x = i === 0 ? tilt + Math.sin(t * 1.2) * 0.04 : 0.05 + Math.sin(t * 1.4 - i) * 0.03 * (1 - s);
@@ -726,17 +727,17 @@ function babyParts(def) {
   let hy = 0.95, hz = 0.45;
   if (s === 'bronto') { p.push(['box', C, 0, 1.0, 0.38, 0.24, 0.7, 0.24, 0.35]); hy = 1.4; hz = 0.62; }
   p.push(['sph', C, 0, hy, hz, 0.64, 0.56, 0.62]);
-  for (const x of [-0.15, 0.15]) p.push(['sph', '#ffffff', x, hy + 0.08, hz + 0.25, 0.2, 0.23, 0.1], ['sph', '#1b1b2f', x, hy + 0.06, hz + 0.3, 0.1, 0.13, 0.05], ['box', '#ff8fab', x * 1.65, hy - 0.08, hz + 0.21, 0.08, 0.05, 0.05]);
+  for (const x of [-0.15, 0.15]) p.push(['sphLo', '#ffffff', x, hy + 0.08, hz + 0.25, 0.2, 0.23, 0.1], ['sphLo', '#1b1b2f', x, hy + 0.06, hz + 0.3, 0.1, 0.13, 0.05], ['box', '#ff8fab', x * 1.65, hy - 0.08, hz + 0.21, 0.08, 0.05, 0.05]);
   if (s === 'rex') { p.push(['box', C, 0.22, 0.58, 0.4, 0.08, 0.2, 0.08, 0.6], ['box', C, -0.22, 0.58, 0.4, 0.08, 0.2, 0.08, 0.6], ['stud', D, 0, hy + 0.27, hz - 0.05, 0.5, 0.6, 0.5]); }
   if (s === 'trike') { p.push(['cyl16', Ac, 0, hy + 0.12, hz - 0.22, 0.85, 0.08, 0.75, Math.PI / 2 - 0.3], ['cone8', '#fff8e1', 0.13, hy + 0.27, hz + 0.12, 0.08, 0.3, 0.08, 0.7], ['cone8', '#fff8e1', -0.13, hy + 0.27, hz + 0.12, 0.08, 0.3, 0.08, 0.7], ['cone8', '#fff8e1', 0, hy - 0.02, hz + 0.33, 0.07, 0.18, 0.07, 1.2]); }
   if (s === 'stego') { for (const z of [-0.35, -0.05, 0.25]) p.push(['box', Ac, 0, 0.88 - Math.abs(z) * 0.2, z, 0.06, 0.28, 0.28, Math.PI / 4]); }
-  if (s === 'bronto') { p.push(['stud', D, 0, hy + 0.27, hz - 0.05, 0.4, 0.5, 0.4]); for (const z of [-0.2, 0.15]) p.push(['sph', D, 0.3, 0.6, z, 0.15, 0.15, 0.15], ['sph', D, -0.3, 0.6, z, 0.15, 0.15, 0.15]); }
+  if (s === 'bronto') { p.push(['stud', D, 0, hy + 0.27, hz - 0.05, 0.4, 0.5, 0.4]); for (const z of [-0.2, 0.15]) p.push(['sphLo', D, 0.3, 0.6, z, 0.15, 0.15, 0.15], ['sphLo', D, -0.3, 0.6, z, 0.15, 0.15, 0.15]); }
   if (s === 'ptero') { p.push(['box', Ac, 0.5, 0.68, 0, 0.7, 0.06, 0.45, 0, 0, 0.4], ['box', Ac, -0.5, 0.68, 0, 0.7, 0.06, 0.45, 0, 0, -0.4], ['cone8', '#ffcc33', 0, hy - 0.06, hz + 0.42, 0.14, 0.32, 0.12, Math.PI / 2], ['cone8', Ac, 0, hy + 0.32, hz - 0.2, 0.1, 0.4, 0.1, -0.9]); }
   return p;
 }
 function eggParts(c) {
   const p = [['sph', '#fff6e0', 0, 0.62, 0, 0.85, 1.1, 0.85]];
-  for (let i = 0; i < 8; i++) { const a = i * 2.4, yy = 0.62 + ((i % 3) - 1) * 0.32, rr = 0.41 * Math.sqrt(Math.max(0.1, 1 - Math.pow((yy - 0.62) / 0.55, 2))); p.push(['sph', c, Math.cos(a) * rr, yy, Math.sin(a) * rr, 0.24, 0.24, 0.24]); }
+  for (let i = 0; i < 8; i++) { const a = i * 2.4, yy = 0.62 + ((i % 3) - 1) * 0.32, rr = 0.41 * Math.sqrt(Math.max(0.1, 1 - Math.pow((yy - 0.62) / 0.55, 2))); p.push(['sphLo', c, Math.cos(a) * rr, yy, Math.sin(a) * rr, 0.24, 0.24, 0.24]); }
   return p;
 }
 function beamTexture() {
@@ -752,7 +753,7 @@ const beamGeo = new THREE.CylinderGeometry(0.55, 0.9, 26, 10, 1, true); beamGeo.
 // =====================================================================
 const FRUIT_MAX = 600;
 const FRUIT_COLORS = ['#ff3b3b', '#ff9f1c', '#9b5de5', '#ffd60a', '#ff5fa2'];
-const fruitMesh = new THREE.InstancedMesh(GEO.sph, new THREE.MeshStandardMaterial({ roughness: 0.25 }), FRUIT_MAX);
+const fruitMesh = new THREE.InstancedMesh(GEO.sphLo, new THREE.MeshStandardMaterial({ roughness: 0.25 }), FRUIT_MAX);
 const leafMesh = new THREE.InstancedMesh(GEO.box, new THREE.MeshStandardMaterial({ color: '#3fae3a', roughness: 0.5 }), FRUIT_MAX);
 for (const m of [fruitMesh, leafMesh]) { m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.count = 0; m.frustumCulled = false; scene.add(m); }
 for (let i = 0; i < FRUIT_MAX; i++) fruitMesh.setColorAt(i, col('#ffffff'));
@@ -877,8 +878,8 @@ function makeMushroom(x, z, h) {
   const g = groundAt(x, z, 50);
   put('cyl16', '#fff1d6', x, g + h / 2, z, 0.9, h, 0.9);
   const parts = [['sph', '#ff4d6d', 0, 0, 0, 2.9, 1.5, 2.9], ['cyl16', '#fff1d6', 0, -0.02, 0, 2.7, 0.12, 2.7]];
-  for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; parts.push(['sph', '#ffffff', Math.cos(a) * 0.95, 0.45, Math.sin(a) * 0.95, 0.5, 0.3, 0.5]); }
-  parts.push(['sph', '#ffffff', 0, 0.74, 0, 0.6, 0.2, 0.6]);
+  for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; parts.push(['sphLo', '#ffffff', Math.cos(a) * 0.95, 0.45, Math.sin(a) * 0.95, 0.5, 0.3, 0.5]); }
+  parts.push(['sphLo', '#ffffff', 0, 0.74, 0, 0.6, 0.2, 0.6]);
   const cap = rigid(scene, parts, x, g + h, z);
   const s = addSolid(x, z, 1.6, g + h + 0.75, g - 1, 'mush');
   mushrooms.push({ cap, solid: s, sq: 0, base: g + h }); keepOut.push([x, z, 2.5]);
@@ -1630,7 +1631,7 @@ function readInput() {
 // =====================================================================
 //  Camera: follows by itself, right stick / drag / Q,E to look around
 // =====================================================================
-let camYaw = 0, camPitch = 0.42;
+let camYaw = 0.55, camPitch = 0.5;
 const camLook = new V3(0, 3, 14);
 function updateCamera(dt) {
   const manual = Math.abs(input.cx) + Math.abs(input.cy) + Math.abs(mouseDX) + Math.abs(mouseDY) > 0.01;
@@ -1768,26 +1769,10 @@ window.__game = {
   unlock(i) { unlockDino(i); },
   face(yaw) { player.yaw = yaw; camYaw = yaw + Math.PI; },
   guide() { guideT = 99; },
-  scene, renderer, camera, keys,
+  cam(y, p) { camYaw = y; camPitch = p; },
+  keys,
   sim(sec, hold = []) { for (const k of hold) keys[k] = true; for (let t = 0; t < sec; t += 1 / 30) tick(1 / 30); for (const k of hold) keys[k] = false; tick(1 / 30); return this.info(); },
   tap(k) { keys[k] = true; tick(1 / 30); keys[k] = false; tick(1 / 30); return this.info(); },
-  prof2() {
-    const gl = renderer.getContext(), px = new Uint8Array(4), fin = () => gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
-    const tr = () => { const t = performance.now(); renderer.render(scene, camera); fin(); return +(performance.now() - t).toFixed(0); };
-    tr(); const base = tr(), out = { base };
-    scene.children.forEach((c, i) => { if (!c.visible) return; c.visible = false; const t = tr(); c.visible = true; if (base - t > base * 0.08) out[i + ':' + c.type + ':' + (c.geometry ? c.geometry.type : '') + ':' + (c.count ?? '')] = t; });
-    return out;
-  },
-  prof() {
-    const T = {}, tm = (n, f) => { const t = performance.now(); f(); T[n] = +(performance.now() - t).toFixed(1); };
-    const gl = renderer.getContext(), px = new Uint8Array(4), fin = () => gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
-    tm('player', () => updatePlayer(0.016)); tm('others', () => updateOtherDinos(0.016)); tm('babies', () => updateBabies(0.016, time));
-    tm('fruit', () => updateFruit(0.016)); tm('birds', () => updateBirds(0.016)); tm('bfly', () => updateButterflies(0.016, time));
-    tm('guide', () => updateGuide(0.016, time)); tm('cam', () => updateCamera(0.016)); tm('fx', () => { updateFX(litFX, 0.016); updateFX(glowFX, 0.016); });
-    tm('render', () => { renderer.render(scene, camera); fin(); });
-    sun.castShadow = false; tm('renderNoShadow', () => { renderer.render(scene, camera); fin(); }); sun.castShadow = true;
-    return T;
-  },
   info() { return { renderCalls: renderer.info.render.calls, tris: renderer.info.render.triangles, pos: player.pos.toArray().map(v => +v.toFixed(2)), dino: curDino().key, followers: followers.length, rescued: save.rescued.length, fruit: save.fruit, states: babies.map(b => b.state).join(',') }; },
 };
 </script>
