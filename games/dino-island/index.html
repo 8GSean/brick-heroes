@@ -1763,6 +1763,14 @@ window.__game = {
   unlock(i) { unlockDino(i); },
   face(yaw) { player.yaw = yaw; camYaw = yaw + Math.PI; },
   guide() { guideT = 99; },
+  scene, renderer, camera,
+  prof2() {
+    const gl = renderer.getContext(), px = new Uint8Array(4), fin = () => gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    const tr = () => { const t = performance.now(); renderer.render(scene, camera); fin(); return +(performance.now() - t).toFixed(0); };
+    tr(); const base = tr(), out = { base };
+    scene.children.forEach((c, i) => { if (!c.visible) return; c.visible = false; const t = tr(); c.visible = true; if (base - t > base * 0.08) out[i + ':' + c.type + ':' + (c.geometry ? c.geometry.type : '') + ':' + (c.count ?? '')] = t; });
+    return out;
+  },
   prof() {
     const T = {}, tm = (n, f) => { const t = performance.now(); f(); T[n] = +(performance.now() - t).toFixed(1); };
     const gl = renderer.getContext(), px = new Uint8Array(4), fin = () => gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);

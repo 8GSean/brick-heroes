@@ -1194,7 +1194,7 @@ function part(parent, w, h, d, color, x, y, z, opts, geo = G.box) {
 function makeTruck(sk) {
   const root = new THREE.Group(), spin = new THREE.Group(), inner = new THREE.Group(), body = new THREE.Group();
   root.add(spin); spin.position.y = 2.3; spin.add(inner); inner.position.y = -2.3; inner.add(body); body.position.y = 2.3;
-  const metal = sk.metal ? { metalness: 0.7, roughness: 0.25 } : { roughness: 0.3 };
+  const metal = sk.metal ? { metalness: 0.25, roughness: 0.2, emissive: '#7a5200', emissiveIntensity: 0.25 } : { roughness: 0.3 };
   const wheels = [];
   for (const [x, z] of [[-1.75, 1.55], [1.75, 1.55], [-1.75, -1.55], [1.75, -1.55]]) {
     const steer = new THREE.Group(); steer.position.set(x, 1.1, z); inner.add(steer);
@@ -1251,8 +1251,8 @@ function makeTruck(sk) {
     lights.push(part(body, 0.9, 0.35, 0.55, '#3070ff', 0.5, 2.6, -0.1, { emissive: '#0040ff', emissiveIntensity: 1 }));
     lights.forEach(l => { l.material = l.material.clone(); });
   } else if (D === 'gold') {
-    part(body, 1.5, 0.5, 1.5, '#ffd23f', 0, 2.5, -0.1, { metalness: 0.8, roughness: 0.2 }, G.cyl);
-    for (let i = 0; i < 5; i++) { const a = i / 5 * TAU; part(body, 0.35, 0.6, 0.35, '#ffd23f', Math.cos(a) * 0.6, 3.0, -0.1 + Math.sin(a) * 0.6, { metalness: 0.8, roughness: 0.2 }, G.cone); }
+    part(body, 1.5, 0.5, 1.5, '#ffd23f', 0, 2.5, -0.1, { metalness: 0.3, roughness: 0.2 }, G.cyl);
+    for (let i = 0; i < 5; i++) { const a = i / 5 * TAU; part(body, 0.35, 0.6, 0.35, '#ffd23f', Math.cos(a) * 0.6, 3.0, -0.1 + Math.sin(a) * 0.6, { metalness: 0.3, roughness: 0.2 }, G.cone); }
     part(body, 0.3, 0.3, 0.3, '#ff3060', 0, 2.55, 0.66, { emissive: '#ff0040', emissiveIntensity: 0.5 }, G.sphere);
   }
   // turbo flames (hidden until X)
@@ -1294,11 +1294,11 @@ const truck = {
   turbo: false, throttle: 0, stuckT: 0, mudT: 0, wheelSpin: 0, model: null, models: [],
 };
 truck.models = SKINS.map(makeTruck);
-function setSkin(i, fx) {
+function setSkin(i, show) {
   i = clamp(i, 0, SKINS.length - 1);
   if (truck.model) truck.model.root.visible = false;
   save.skin = i; saveDirty = true; truck.model = truck.models[i]; truck.model.root.visible = true;
-  if (fx) { SFX.swap(); for (let k = 0; k < 30; k++) fx(glowFX, truck.pos.x, truck.pos.y + 2, truck.pos.z, { vx: rand(-8, 8), vy: rand(2, 10), vz: rand(-8, 8), life: 0.7, s: 0.3, color: spick(BRIGHT), grav: -10 }); truck.stretch = 1; }
+  if (show) { SFX.swap(); for (let k = 0; k < 30; k++) fx(glowFX, truck.pos.x, truck.pos.y + 2, truck.pos.z, { vx: rand(-8, 8), vy: rand(2, 10), vz: rand(-8, 8), life: 0.7, s: 0.3, color: spick(BRIGHT), grav: -10 }); truck.stretch = 1; }
   refreshTruckHUD();
 }
 function unlockedCount() { return CONFIG.unlocks.filter(t => save.score >= t).length; }
@@ -1340,7 +1340,7 @@ function updateTruck(dt) {
   const maxS = truck.turbo ? T.turboSpeed : T.maxSpeed, acc = truck.turbo ? T.turboAccel : T.accel;
   // ---------- held by the crane magnet ----------
   if (truck.held) {
-    P.lerp(_c.copy(crane.magPos).add(_d.set(0, -4.2, 0)), 1 - Math.exp(-dt * 8)); Vv.copy(crane.magVel);
+    P.lerp(_c.copy(crane.magPos).add(_d.set(0, -5.3, 0)), 1 - Math.exp(-dt * 8)); Vv.copy(crane.magVel);
     truck.onGround = false; truck.air += dt; truck.tumble += dt * Math.sin(time * 3) * 0.6;
     if (input.jump) truck.wantEscape = true;
     return;
