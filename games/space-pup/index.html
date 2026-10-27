@@ -694,10 +694,10 @@ PLANETS.forEach((cfg, i) => {
   const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: cfg.glow, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false }));
   glow.scale.setScalar(cfg.r * 3.6); glow.position.copy(c); scene.add(glow);
   if (cfg.ring) {
-    const rg = new THREE.RingGeometry(cfg.r * 1.75, cfg.r * 2.35, 64, 3), rc = [], rp = rg.attributes.position, cols = cfg.ring.map(h => new THREE.Color(h));
-    for (let k = 0; k < rp.count; k++) { const d = Math.hypot(rp.getX(k), rp.getY(k)), t = (d - cfg.r * 1.75) / (cfg.r * 0.6), col = cols[clamp(Math.floor(t * cols.length), 0, cols.length - 1)]; rc.push(col.r, col.g, col.b); }
+    const rg = new THREE.RingGeometry(cfg.r * 2.6, cfg.r * 3.3, 72, 3), rc = [], rp = rg.attributes.position, cols = cfg.ring.map(h => new THREE.Color(h));
+    for (let k = 0; k < rp.count; k++) { const d = Math.hypot(rp.getX(k), rp.getY(k)), t = (d - cfg.r * 2.6) / (cfg.r * 0.7), col = cols[clamp(Math.floor(t * cols.length), 0, cols.length - 1)]; rc.push(col.r, col.g, col.b); }
     rg.setAttribute('color', new THREE.Float32BufferAttribute(rc, 3));
-    const ring = new THREE.Mesh(rg, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false }));
+    const ring = new THREE.Mesh(rg, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.45, side: THREE.DoubleSide, depthWrite: false }));
     ring.position.copy(c); ring.rotation.set(Math.PI / 2 + 0.35, 0.25 * i, 0); scene.add(ring);
   }
   bodies.push({ c, r: cfg.r, planet: i, isMoon: false, mesh });
