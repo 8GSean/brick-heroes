@@ -1,0 +1,15 @@
+{
+  "name": "brick-heroes-coop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tiny real-time relay server for Brick Heroes co-op (Cloudflare Worker + Durable Object)",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "node test-client.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.154.0"
+  }
+}
